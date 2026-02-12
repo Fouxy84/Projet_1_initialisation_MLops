@@ -1,0 +1,28 @@
+# Data
+data/raw/
+data/proceed/
+
+# MLflow
+notebook/mlruns
+*.zip
+mlflow.db
+*.log
+.ipynb_checkpoints/
+
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+env/
+
+# Notebooks checkpoints
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+echo "*.zip" >> .gitignore
+echo "*.pdf" >> .gitignore
+echo "mlruns/" >> .gitignore
