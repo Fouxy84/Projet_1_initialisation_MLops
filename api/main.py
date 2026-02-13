@@ -3,16 +3,17 @@ import mlflow
 import mlflow.pyfunc
 from fastapi import FastAPI, HTTPException
 import pandas as pd
-#from app.schema import ClientData
-from api.load_data import model_lgb
-#from api.schema import ClientData
+
 import time
 from pydantic import BaseModel
 
 app = FastAPI(title="HomeCredit Scoring API")
 
-#model_path = "file:///C:/Users/coach/Desktop/datascientest/OpenClassrooms/Projects_MLops/Projet_1_initialisation_MLops/notebook/mlruns/models/HomeCredit_Scoring_final_LightGBM/version-5"
-#model = mlflow.pyfunc.load_model(model_path)
+MODEL_PATH = "file:///C:/Users/coach/Desktop/datascientest/OpenClassrooms/Projects_MLops/Projet_1_initialisation_MLops/notebook/mlruns/models/HomeCredit_Scoring_final_LightGBM/version-5"
+MODEL_PATH = r"C:\Users\coach\Desktop\datascientest\OpenClassrooms\Projects_MLops\mlruns-20260212T220513Z-1-001\mlruns\models\HomeCredit_Scoring_final_LightGBM\version-5"
+
+#model = mlflow.pyfunc.load_model(MODEL_PATH)
+
 best_thresold = 0.5
 
 # ---- Schema Pydantic ----
@@ -22,7 +23,13 @@ class ClientData(BaseModel):
     AMT_ANNUITY: float
     DAYS_EMPLOYED: float
     DAYS_BIRTH: float
-    # ajouter toutes les features nécessaires
+    EXT_SOURCE_1: float
+    EXT_SOURCE_2: float
+    EXT_SOURCE_3: float
+    NAME_INCOME_TYPE: str
+    NAME_EDUCATION_TYPE: str
+    NAME_FAMILY_STATUS: str 
+    NAME_HOUSING_TYPE: str
 
 @app.get("/")
 def health():
@@ -33,8 +40,7 @@ def predict(data: ClientData):
     try:
         start_time = time.time()
         input_df = pd.DataFrame([data.dict()])
-        # selon ton modèle MLflow
-        proba = model_lgb.predict(input_df)[0]
+        proba = 0.2 #model.predict(input_df)[0]
         prediction = int(proba >= best_thresold)
         latency = time.time() - start_time
         
