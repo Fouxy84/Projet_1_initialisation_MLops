@@ -5,10 +5,14 @@ class ClientData(BaseModel):
     AMT_ANNUITY: float
     DAYS_EMPLOYED: float
     DAYS_BIRTH: float
-    EXT_SOURCE_1: float
-    EXT_SOURCE_2: float
-    EXT_SOURCE_3: float
-    NAME_INCOME_TYPE: str
-    NAME_EDUCATION_TYPE: str
-    NAME_FAMILY_STATUS: str 
-    NAME_HOUSING_TYPE: str
+   
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "AMT_INCOME_TOTAL": 120000,
+                "AMT_CREDIT": 350000,
+                "AMT_ANNUITY": 18000,
+                "DAYS_EMPLOYED": -2000,
+                "DAYS_BIRTH": -15000
+            }
+        }

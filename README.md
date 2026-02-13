@@ -18,6 +18,8 @@ Build an end-to-end MLOps pipeline to predict loan default risk.
 - LightGBM
 - MLflow
 
-## Author
-Adam F.
+## api & docker
+docker build -t homecredit_scorer .
+docker run -p 8000:8000 homecredit_scorer
+
 
