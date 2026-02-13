@@ -4,7 +4,7 @@ import mlflow
 import mlflow.pyfunc
 from fastapi import FastAPI, HTTPException
 import pandas as pd
-from inference_data import ClientData
+from api.inference_data import ClientData
 import time
 from pydantic import BaseModel
 from pathlib import Path
