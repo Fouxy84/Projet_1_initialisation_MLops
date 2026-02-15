@@ -66,6 +66,7 @@ X_test = pd.DataFrame(imputer.transform(X_test), columns=X_test.columns, index=X
 BASE_DIR = Path(r"C:/Users/coach/Desktop/datascientest/OpenClassrooms/Projects_MLops/Projet_1_initialisation_MLops")
 DATA_MLRUNS = BASE_DIR / "notebook" / "mlruns"
 #mlflow.set_tracking_uri(f"file:///{DATA_MLRUNS.as_posix()}") #Projet_1_initialisation_MLops/notebook/mlruns
+
 mlflow.set_tracking_uri(f"sqlite:///{(BASE_DIR / 'notebook' / 'mlruns' / 'mlflow.db').as_posix()}")
 
 #mlflow.set_tracking_uri("file:/content/drive/MyDrive/Colab Notebooks/Projet_1_initialisation_MLops/notebook/mlruns")
