@@ -5,6 +5,9 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends libgomp1 && \
     rm -rf /var/lib/apt/lists/*
 
+ENV MLFLOW_TRACKING_URI=file:/app/notebook/mlruns
+ENV PYTHONPATH=/app
+
 WORKDIR /app
 
 # Python deps
@@ -13,8 +16,9 @@ RUN pip install --no-cache-dir -r requirement.txt
 
 # Code + modèle
 COPY api ./api
-COPY models ./models
+COPY notebook/mlruns ./notebook/mlruns
 
+#port API
 EXPOSE 8000
 
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
