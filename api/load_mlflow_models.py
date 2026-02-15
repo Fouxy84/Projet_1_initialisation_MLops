@@ -1,31 +1,41 @@
-
+# api/load_mlflow_models.py
 import mlflow
 import json
 import joblib
 from pathlib import Path
+from typing import Optional
 
-# ============================
-# GLOBAL MLFLOW CONFIG (CRUCIAL)
-# ============================
+# ======================================================
+# GLOBAL MLFLOW CONFIG (API = READ-ONLY)
+# ======================================================
 BASE_DIR = Path(__file__).resolve().parents[1]
 MLFLOW_DB = BASE_DIR / "notebook" / "mlruns" / "mlflow.db"
 
 mlflow.set_tracking_uri(f"sqlite:///{MLFLOW_DB.as_posix()}")
 
-# ============================
-# LOAD MODEL + ARTIFACTS
-# ============================
-def load_model_bundle(model_name: str, stage: str | None = None, flavor: str = None):
 
-    if stage:
-        model_uri = f"models:/{model_name}/{stage}"
-    else:
-        model_uri = f"models:/{model_name}/latest"
+# ======================================================
+# LOAD MODEL + ASSOCIATED ARTIFACTS
+# ======================================================
+def load_model_bundle(
+    model_name: str,
+    stage: Optional[str] = None,
+    flavor: str = "xgb",
+):
+   
+    # ---- Resolve model URI
+    model_uri = (
+        f"models:/{model_name}/{stage}"
+        if stage
+        else f"models:/{model_name}/latest"
+    )
 
     # ---- Load model (pyfunc wrapper)
     model = mlflow.pyfunc.load_model(model_uri)
+
     client = mlflow.tracking.MlflowClient()
-    # ---- Resolve model version safely
+
+    # ---- Resolve model version
     versions = (
         client.get_latest_versions(model_name, [stage])
         if stage
@@ -38,15 +48,23 @@ def load_model_bundle(model_name: str, stage: str | None = None, flavor: str = N
     model_version = versions[0]
     run_id = model_version.run_id
 
-    # ---- Resolve artifact directory (portable)
+    # ---- Resolve artifact directory
     run = client.get_run(run_id)
-    artifact_path = Path(run.info.artifact_uri.replace("file:///", ""))
 
-    # ---- Load artifacts
-    imputer = joblib.load(artifact_path / flavor / "imputer.joblib")
-    features = joblib.load(artifact_path / flavor / "features.joblib")
+    # artifact_uri looks like: file:///.../mlruns/1/<run_id>/artifacts
+    artifact_root = Path(run.info.artifact_uri.replace("file:///", ""))
 
-    with open(artifact_path / flavor / "threshold.json") as f:
+    flavor_dir = artifact_root / flavor
+    if not flavor_dir.exists():
+        raise FileNotFoundError(
+            f"Artifacts folder '{flavor}' not found for model '{model_name}'"
+        )
+
+    # ---- Load inference artifacts
+    imputer = joblib.load(flavor_dir / "imputer.joblib")
+    features = joblib.load(flavor_dir / "features.joblib")
+
+    with open(flavor_dir / "threshold.json", "r") as f:
         threshold = json.load(f)["best_threshold"]
 
     return {
@@ -54,6 +72,7 @@ def load_model_bundle(model_name: str, stage: str | None = None, flavor: str = N
         "imputer": imputer,
         "features": features,
         "threshold": threshold,
+        "model_name": model_name,
         "model_version": model_version.version,
         "run_id": run_id,
     }
