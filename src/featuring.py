@@ -44,10 +44,10 @@ def one_hot_encoder(df, max_categories=10, nan_as_category=True):
 
 def load_application():
     train = pd.read_csv(RAW / "application_train.csv")
-    test = pd.read_csv(RAW / "application_test.csv")
+    #test = pd.read_csv(RAW / "application_test.csv")
     print("Train:", train.shape)
-    print("Test :", test.shape)
-    df = pd.concat([train, test], axis=0)
+    #print("Test :", test.shape)
+    df = train #pd.concat([train, test], axis=0)
     # Remove XNA
     df = df[df["CODE_GENDER"] != "XNA"]
 
@@ -184,7 +184,7 @@ def build_dataset():
     cc = process_credit_card()
     df = df.join(cc, on="SK_ID_CURR")
     print("Final shape:", df.shape)
-    df = df.astype(np.float32)
+    df = df.astype(np.float16)
     # Save
     output = PROC / "homecredit_features.csv"
     df.to_csv(output, index=False)
