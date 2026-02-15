@@ -4,19 +4,27 @@ import mlflow
 import mlflow.pyfunc
 from fastapi import FastAPI, HTTPException
 import pandas as pd
-from api.inference_data import ClientData
+import load_mlflow_models
+from inference_data import ClientData
 import time
 from pydantic import BaseModel
 from pathlib import Path
 
 app = FastAPI(title="HomeCredit Scoring API")
 
+#MODEL_NAME = "HomeCredit_Scoring_final_LightGBM"
+#model = load_mlflow_models(MODEL_NAME)
+
+
+# Chargement du dernier modèle au démarrage de l'application
+#model = load_latest_model(MODEL_NAME)
 #MODEL_PATH = "file:///C:/Users/coach/Desktop/datascientest/OpenClassrooms/Projects_MLops/Projet_1_initialisation_MLops/notebook/mlruns/models/HomeCredit_Scoring_final_LightGBM/version-5"
 #MODEL_PATH = r"C:\Users\coach\Desktop\datascientest\OpenClassrooms\Projects_MLops\mlruns-20260212T220513Z-1-001\mlruns\models\HomeCredit_Scoring_final_LightGBM\version-5"
 #model = mlflow.pyfunc.load_model(MODEL_PATH)
 
 BASE_DIR = Path(r"C:/Users/coach/Desktop/datascientest/OpenClassrooms/Projects_MLops/Projet_1_initialisation_MLops")
 MODEL_PATH = BASE_DIR / "models" / "lightgbm_model.joblib"
+#MODEL_PATH = "models/lightgbm_model.joblib"
 
 artifact = joblib.load(MODEL_PATH)
 model = artifact["model"]
