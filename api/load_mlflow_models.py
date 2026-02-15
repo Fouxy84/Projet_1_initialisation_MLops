@@ -1,37 +1,59 @@
 
-# api/load_mlflow_models.py
+import mlflow
 import json
 import joblib
-import mlflow
-from mlflow.tracking import MlflowClient
 from pathlib import Path
 
+# ============================
+# GLOBAL MLFLOW CONFIG (CRUCIAL)
+# ============================
+BASE_DIR = Path(__file__).resolve().parents[1]
+MLFLOW_DB = BASE_DIR / "notebook" / "mlruns" / "mlflow.db"
 
-MLFLOW_TRACKING_URI = "file:/notebook/mlruns"
-mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+mlflow.set_tracking_uri(f"sqlite:///{MLFLOW_DB.as_posix()}")
 
-client = MlflowClient()
+# ============================
+# LOAD MODEL + ARTIFACTS
+# ============================
+def load_model_bundle(model_name: str, stage: str | None = None, flavor: str = None):
 
-def load_model_bundle(model_name: str, stage: str = "Production", model_str):
-    model_uri = f"models:/{model_name}/{stage}"
+    if stage:
+        model_uri = f"models:/{model_name}/{stage}"
+    else:
+        model_uri = f"models:/{model_name}/latest"
+
+    # ---- Load model (pyfunc wrapper)
     model = mlflow.pyfunc.load_model(model_uri)
-
-    model_version = client.get_latest_versions(model_name, [stage])[0]
-    run_id = model_version.run_id
-
-    artifacts_path = Path(
-        mlflow.artifacts.download_artifacts(run_id=run_id)
+    client = mlflow.tracking.MlflowClient()
+    # ---- Resolve model version safely
+    versions = (
+        client.get_latest_versions(model_name, [stage])
+        if stage
+        else client.get_latest_versions(model_name)
     )
 
-    imputer = joblib.load(artifacts_path / "artifacts" / model_str /"imputer.joblib")
-    features = joblib.load(artifacts_path / "artifacts" / model_str / "features.joblib")
+    if not versions:
+        raise RuntimeError(f"No versions found for model '{model_name}'")
 
-    with open(artifacts_path / "artifacts" / model_str / "threshold.json") as f:
+    model_version = versions[0]
+    run_id = model_version.run_id
+
+    # ---- Resolve artifact directory (portable)
+    run = client.get_run(run_id)
+    artifact_path = Path(run.info.artifact_uri.replace("file:///", ""))
+
+    # ---- Load artifacts
+    imputer = joblib.load(artifact_path / flavor / "imputer.joblib")
+    features = joblib.load(artifact_path / flavor / "features.joblib")
+
+    with open(artifact_path / flavor / "threshold.json") as f:
         threshold = json.load(f)["best_threshold"]
 
     return {
         "model": model,
         "imputer": imputer,
         "features": features,
-        "threshold": threshold
+        "threshold": threshold,
+        "model_version": model_version.version,
+        "run_id": run_id,
     }

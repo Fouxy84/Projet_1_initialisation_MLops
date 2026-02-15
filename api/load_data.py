@@ -44,7 +44,7 @@ X = train_df.drop(columns=["TARGET", "SK_ID_CURR"])
 y = train_df["TARGET"]
 
 #reduction de la taille du dataset pour accélérer l'entraînement
-X = X.sample(n=150000, random_state=42)
+X = X.sample(n=100000, random_state=42)
 y = y.loc[X.index]
 print(X.shape, y.shape)
 

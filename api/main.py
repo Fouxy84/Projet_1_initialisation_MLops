@@ -12,12 +12,18 @@ from pydantic import BaseModel
 from pathlib import Path
 
 app = FastAPI(title="HomeCredit Scoring API")
-best_thresold = 0.5
-MODELS = {
-    "xgboost": load_model_bundle("HomeCredit_Scoring_final_XGBoost","Production","xgb"),
-    "lightgbm": load_model_bundle("HomeCredit_Scoring_final_LightGBM","Production","lgb"),
-}
+best_thresold =0.1
 
+try:
+    MODELS = {"xgboost": load_model_bundle(model_name="HomeCredit_Scoring_final_XGBoost",stage=None,flavor="xgb"),
+        "lightgbm": load_model_bundle( model_name="HomeCredit_Scoring_final_LightGBM",stage=None,flavor="lgb")}
+except Exception as e:
+    # Fail fast if models cannot be loaded
+    raise RuntimeError(f" Failed to load ML models: {e}")
+
+bundle = load_model_bundle("HomeCredit_Scoring_final_XGBoost",stage=None,flavor="xgb")
+print(bundle.keys())
+print(len(bundle["features"]))
 
 @app.get("/")
 def health():
@@ -33,13 +39,17 @@ def predict(model_name: str, data: ClientData):
         features = model_info["features"]
         threshold = model_info["threshold"]
 
-        input_df = pd.DataFrame([data.dict()])
-        input_df = input_df[features]
-        input_df = imputer.transform(input_df)
-        proba = model.predict_proba(input_df)[0][1]
-        prediction = int(proba >= threshold)
-        latency = time.time() - start_time
-        return {"prediction_probability": float(proba),"prediction": prediction,"latency_seconds": round(latency, 4)}
+        input_df = pd.DataFrame([data.dict()]) #dataframe
+        input_df = input_df[features] #featuring
+        input_df = input_df.reindex(columns=features) #featuring
+        input_df = imputer.transform(input_df) # imputation valeurs manquantes
+        proba = model.predict_proba(input_df)[0][1] # proba prediction
+        prediction = int(proba >= threshold) # seuil de décision
+        latency = time.time() - start_time #latence de traitement
+        return {"model": model_name, 
+                "prediction_probability": float(proba),
+                "prediction": prediction,
+                "latence": round(latency, 4)}
     
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

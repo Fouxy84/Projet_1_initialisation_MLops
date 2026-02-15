@@ -21,11 +21,7 @@ Build an end-to-end MLOps pipeline to predict loan default risk.
 
 ## api & docker
 #MLFLOW
-
-mlflow ui ^
-  --backend-store-uri file:///C:/Users/coach/Desktop/datascientest/OpenClassrooms/Projects_MLops/Projet_1_initialisation_MLops/notebook/mlruns ^
-  --host 127.0.0.1 ^
-  --port 5000
+cd 'C:\Users\coach\Desktop\datascientest\OpenClassrooms\Projects_MLops\Projet_1_initialisation_MLops\notebook\mlruns' mlflow ui
 
 #API
 uvicorn main:app --reload
