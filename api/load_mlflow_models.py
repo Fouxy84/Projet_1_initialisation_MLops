@@ -1,20 +1,37 @@
-from mlflow.tracking import MlflowClient
-import mlflow.pyfunc
 
-def load_latest_model(registered_model_name: str):
-    client = MlflowClient()
-    # Récupère toutes les versions du modèle enregistré triées par version décroissante
-    versions = client.get_latest_versions(registered_model_name, stages=["None", "Staging", "Production"])
-    
-    if not versions:
-        raise ValueError(f"Aucun modèle trouvé pour : {registered_model_name}")
-    
-    # Choisir la version la plus récente (ou avec stage Production si vous préférez)
-    latest_model_version = versions[0]
-    
-    model_uri = f"models:/{registered_model_name}/{latest_model_version.version}"
-    
-    # Charge le modèle avec MLflow pyfunc
+# api/load_mlflow_models.py
+import json
+import joblib
+import mlflow
+from mlflow.tracking import MlflowClient
+from pathlib import Path
+
+
+MLFLOW_TRACKING_URI = "file:/notebook/mlruns"
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+
+client = MlflowClient()
+
+def load_model_bundle(model_name: str, stage: str = "Production", model_str):
+    model_uri = f"models:/{model_name}/{stage}"
     model = mlflow.pyfunc.load_model(model_uri)
-    print(f"Chargé modèle {registered_model_name} version {latest_model_version.version}")
-    return model
+
+    model_version = client.get_latest_versions(model_name, [stage])[0]
+    run_id = model_version.run_id
+
+    artifacts_path = Path(
+        mlflow.artifacts.download_artifacts(run_id=run_id)
+    )
+
+    imputer = joblib.load(artifacts_path / "artifacts" / model_str /"imputer.joblib")
+    features = joblib.load(artifacts_path / "artifacts" / model_str / "features.joblib")
+
+    with open(artifacts_path / "artifacts" / model_str / "threshold.json") as f:
+        threshold = json.load(f)["best_threshold"]
+
+    return {
+        "model": model,
+        "imputer": imputer,
+        "features": features,
+        "threshold": threshold
+    }

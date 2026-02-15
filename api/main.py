@@ -6,46 +6,38 @@ from fastapi import FastAPI, HTTPException
 import pandas as pd
 import load_mlflow_models
 from inference_data import ClientData
+from load_mlflow_models import load_model_bundle
 import time
 from pydantic import BaseModel
 from pathlib import Path
 
 app = FastAPI(title="HomeCredit Scoring API")
-
-#MODEL_NAME = "HomeCredit_Scoring_final_LightGBM"
-#model = load_mlflow_models(MODEL_NAME)
-
-
-# Chargement du dernier modèle au démarrage de l'application
-#model = load_latest_model(MODEL_NAME)
-#MODEL_PATH = "file:///C:/Users/coach/Desktop/datascientest/OpenClassrooms/Projects_MLops/Projet_1_initialisation_MLops/notebook/mlruns/models/HomeCredit_Scoring_final_LightGBM/version-5"
-#MODEL_PATH = r"C:\Users\coach\Desktop\datascientest\OpenClassrooms\Projects_MLops\mlruns-20260212T220513Z-1-001\mlruns\models\HomeCredit_Scoring_final_LightGBM\version-5"
-#model = mlflow.pyfunc.load_model(MODEL_PATH)
-
-BASE_DIR = Path(r"C:/Users/coach/Desktop/datascientest/OpenClassrooms/Projects_MLops/Projet_1_initialisation_MLops")
-MODEL_PATH = BASE_DIR / "models" / "lightgbm_model.joblib"
-#MODEL_PATH = "models/lightgbm_model.joblib"
-
-artifact = joblib.load(MODEL_PATH)
-model = artifact["model"]
-features = artifact["features"]
-imputer = artifact["imputer"]
-
 best_thresold = 0.5
+MODELS = {
+    "xgboost": load_model_bundle("HomeCredit_Scoring_final_XGBoost","Production","xgb"),
+    "lightgbm": load_model_bundle("HomeCredit_Scoring_final_LightGBM","Production","lgb"),
+}
 
 
 @app.get("/")
 def health():
-    return {"status": "API running well"}
+    return {"status": "API running well", "available_models": list(MODELS.keys())}
 
-@app.post("/predict")
-def predict(data: ClientData):
+@app.post("/predict/{model_name}")
+def predict(model_name: str, data: ClientData):
     try:
         start_time = time.time()
+        model_info = MODELS[model_name]
+        imputer = model_info["imputer"]
+        model = model_info["model"]
+        features = model_info["features"]
+        threshold = model_info["threshold"]
+
         input_df = pd.DataFrame([data.dict()])
+        input_df = input_df[features]
         input_df = imputer.transform(input_df)
         proba = model.predict_proba(input_df)[0][1]
-        prediction = int(proba >= best_thresold)
+        prediction = int(proba >= threshold)
         latency = time.time() - start_time
         return {"prediction_probability": float(proba),"prediction": prediction,"latency_seconds": round(latency, 4)}
     
