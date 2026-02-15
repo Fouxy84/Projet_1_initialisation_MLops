@@ -28,6 +28,68 @@ try:
 except Exception as e:
     raise RuntimeError(f"Failed to load ML models: {e}")
 
+def _predict_with_model(model_key: str, data: ClientData):
+    start_time = time.time()
+
+    bundle = MODELS[model_key]
+    model = bundle["model"]
+    imputer = bundle["imputer"]
+    features = bundle["features"]
+    threshold = bundle["threshold"]
+
+    # ---- Input preprocessing
+    input_df = pd.DataFrame([data.dict()])
+    input_df = input_df.reindex(columns=features)
+
+    input_df = imputer.transform(input_df)
+
+    # ---- Prediction
+    proba = float(model.predict(input_df)[0][1])
+    prediction = int(proba >= threshold)
+    
+    print(type(model))
+    print(model.predict(input_df))
+
+    latency = time.time() - start_time
+
+    return {
+        "model": model_key,
+        "prediction_probability": float(proba),
+        "prediction": prediction,
+        "threshold": threshold,
+        "latency_seconds": round(latency, 4),
+    }
+
+import random
+
+def predict_random_sample(model_key: str):
+    bundle = MODELS[model_key]
+
+    pool = bundle.get("inference_pool")
+    if not pool:
+        raise HTTPException(status_code=500, detail="Inference pool not available")
+
+    # ---- Pick random client
+    sample = random.choice(pool)
+    input_df = pd.DataFrame([sample])
+
+    # ---- Reorder + impute
+    input_df = input_df.reindex(columns=bundle["features"])
+    input_df = bundle["imputer"].transform(input_df)
+
+    # ---- Predict
+    proba = bundle["model"].predict_proba(input_df)[0][1]
+    prediction = int(proba >= bundle["threshold"])
+
+    return {
+        "model": model_key,
+        "prediction_probability": float(proba),
+        "prediction": prediction,
+        "threshold": bundle["threshold"],
+        "sample_used": sample,
+    }
+
+
 
 # ======================================================
 # ROUTES
@@ -39,44 +101,27 @@ def health():
         "available_models": list(MODELS.keys()),
     }
 
-
-@app.post("/predict/{model_name}")
-def predict(model_name: str, data: ClientData):
-    if model_name not in MODELS:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Model '{model_name}' not available",
-        )
-
+@app.post("/predict/XGBoost", tags=["Prediction"])
+def predict_xgboost(data: ClientData):
     try:
-        start_time = time.time()
-
-        bundle = MODELS[model_name]
-        model = bundle["model"]
-        imputer = bundle["imputer"]
-        features = bundle["features"]
-        threshold = bundle["threshold"]
-
-        # ---- Input preprocessing
-        input_df = pd.DataFrame([data.dict()])
-        input_df = input_df.reindex(columns=features)
-
-        input_df = imputer.transform(input_df)
-
-        # ---- Prediction
-        proba = model.predict_proba(input_df)[0][1]
-        prediction = int(proba >= threshold)
-
-        latency = time.time() - start_time
-
-        return {
-            "model": model_name,
-            "prediction_probability": float(proba),
-            "prediction": prediction,
-            "threshold": threshold,
-            "latency_seconds": round(latency, 4),
-        }
-
+        return _predict_with_model("xgboost", data)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/predict/XGBoost")
+def predict_xgboost_random():
+    return predict_random_sample("xgboost")
+
+
+
+@app.post("/predict/LightGBM", tags=["Prediction"])
+def predict_lightgbm(data: ClientData):
+    try:
+        return _predict_with_model("lightgbm", data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/predict/LightGBM")
+def predict_lightgbm_random():
+    return predict_random_sample("lightgbm")
 

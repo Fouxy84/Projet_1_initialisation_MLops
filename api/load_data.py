@@ -91,6 +91,14 @@ mlflow.set_experiment("HomeCredit_Scoring_all_best_models")
 
 print("MLflow URI:", mlflow.get_tracking_uri())
 
+# ---- Save random inference pool (JSON serializable) - 50 clients from test set
+with mlflow.start_run(run_name="inference_pool"):
+    inference_pool = (X_test.sample(n=50, random_state=42).to_dict(orient="records"))
+
+    with open("inference_pool.json", "w") as f:
+        json.dump(inference_pool, f)
+
+    mlflow.log_artifact("inference_pool.json")
 
 # ============================================================
 # XGBoost

@@ -47,11 +47,7 @@ def load_model_bundle(
 
     model_version = versions[0]
     run_id = model_version.run_id
-
-    # ---- Resolve artifact directory
     run = client.get_run(run_id)
-
-    # artifact_uri looks like: file:///.../mlruns/1/<run_id>/artifacts
     artifact_root = Path(run.info.artifact_uri.replace("file:///", ""))
 
     flavor_dir = artifact_root / flavor
@@ -66,6 +62,14 @@ def load_model_bundle(
 
     with open(flavor_dir / "threshold.json", "r") as f:
         threshold = json.load(f)["best_threshold"]
+    
+    # ---- Load inference pool (for testing)
+    inference_pool_path = artifact_root / "inference_pool.json"
+    if inference_pool_path.exists():
+        with open(inference_pool_path, "r") as f:
+            inference_pool = json.load(f)
+    else:
+        inference_pool = [] 
 
     return {
         "model": model,
@@ -73,6 +77,7 @@ def load_model_bundle(
         "features": features,
         "threshold": threshold,
         "model_name": model_name,
+        "inference_pool": inference_pool,
         "model_version": model_version.version,
         "run_id": run_id,
     }
