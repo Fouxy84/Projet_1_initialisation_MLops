@@ -40,22 +40,39 @@ df = pd.read_csv(DATA_PATH, low_memory=False)
 print(df.shape)
 
 train_df = df[df["TARGET"].notna()]
-train_autoML = train_df.drop(columns=["SK_ID_CURR"])
 X = train_df.drop(columns=["TARGET", "SK_ID_CURR"])
-X = X.replace([np.inf, -np.inf], np.nan)
-imputer = SimpleImputer(strategy="median") #remplace les valeurs manquantes par la médiane de chaque colonne
-X = pd.DataFrame(imputer.fit_transform(X), columns=X.columns, index=X.index)
 y = train_df["TARGET"]
-X.columns = (
-    X.columns
-    .str.replace(r"[^0-9a-zA-Z_]", "_", regex=True)
-    .str.replace(r"_+", "_", regex=True)
-)
+
+#reduction de la taille du dataset pour accélérer l'entraînement
+X = X.sample(n=150000, random_state=42)
+y = y.loc[X.index]
+print(X.shape, y.shape)
+
+X.columns = (X.columns.str.replace(r"[^0-9a-zA-Z_]", "_", regex=True).str.replace(r"_+", "_", regex=True))
+X = X.replace([np.inf, -np.inf], np.nan)
+X = X.astype(np.float64)
+
+nan_cols = X.columns[X.isna().all()]
+if len(nan_cols) > 0:
+    print(f"Colonnes supprimées après nettoyage: {list(nan_cols)}")
+    X = X.drop(columns=nan_cols)
 
 X_train,X_test,y_train,y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
-mlflow.set_tracking_uri("file:/content/drive/MyDrive/Colab Notebooks/Projet_1_initialisation_MLops/notebook/mlruns")
+imputer = SimpleImputer(strategy="median") #remplace les valeurs manquantes par la médiane de chaque colonne
+X_train = pd.DataFrame(imputer.fit_transform(X_train), columns=X_train.columns, index=X_train.index)
+X_test = pd.DataFrame(imputer.transform(X_test), columns=X_test.columns, index=X_test.index)
+
+BASE_DIR = Path(r"C:/Users/coach/Desktop/datascientest/OpenClassrooms/Projects_MLops/Projet_1_initialisation_MLops")
+DATA_MLRUNS = BASE_DIR / "notebook" / "mlruns"
+#mlflow.set_tracking_uri(f"file:///{DATA_MLRUNS.as_posix()}") #Projet_1_initialisation_MLops/notebook/mlruns
+mlflow.set_tracking_uri(f"sqlite:///{(BASE_DIR / 'notebook' / 'mlruns' / 'mlflow.db').as_posix()}")
+
+#mlflow.set_tracking_uri("file:/content/drive/MyDrive/Colab Notebooks/Projet_1_initialisation_MLops/notebook/mlruns")
 mlflow.set_experiment("HomeCredit_Scoring_all_best_models")
+
+print("MLflow tracking URI:", mlflow.get_tracking_uri())
+print("Experiment:",mlflow.get_experiment_by_name("HomeCredit_Scoring_all_best_models"))
 
 with mlflow.start_run(run_name="XGBoost_best_model"):
     model_xgb = xgb.XGBClassifier(learning_rate=0.1, n_estimators=400, max_depth=6, eval_metric="logloss",random_state=42)
@@ -75,11 +92,21 @@ with mlflow.start_run(run_name="XGBoost_best_model"):
     # Log parameters
     mlflow.log_params(model_xgb.get_params())
     mlflow.set_tags({"model_type": "XGBoost_best","project": "HomeCredit_Scoring_all_best_models","optimization": "Business_Cost"})
+    mlflow.set_tags({
+        "dataset_rows": X.shape[0],
+        "dataset_features": X.shape[1],
+        "has_imputer": True,
+        "deployment_ready": True})
     # Log artifacts
     artefact_dir = Path("artifacts/xgb")
     artefact_dir.mkdir(parents=True,exist_ok=True)
     joblib.dump(imputer, "artifacts/xgb/imputer.joblib")
-    joblib.dump(list(X_train.columns), "artifacts/xgb/features.joblib")
+    features = list(X.columns)
+    with open("features.json", "w") as f:
+        json.dump(features, f)
+    #mlflow.log_artifact("features.json")
+
+    joblib.dump(features, "artifacts/xgb/features.joblib")
     with open("artifacts/xgb/threshold.json", "w") as f:
         json.dump({"best_threshold": float(best_t)}, f)
     
@@ -110,15 +137,26 @@ with mlflow.start_run(run_name="LightGBM_best_model"):
     # Log parameters
     mlflow.log_params(model_lgb.get_params())
     mlflow.set_tags({"model_type": "LightGBM_best","project": "HomeCredit_Scoring_all_best_models","optimization": "Business_Cost"})
+    mlflow.set_tags({
+        "dataset_rows": X.shape[0],
+        "dataset_features": X.shape[1],
+        "has_imputer": True,
+        "deployment_ready": True})
+
     # Log artifacts
     artefact_dir = Path("artifacts/lgb")
     artefact_dir.mkdir(parents=True,exist_ok=True)
     joblib.dump(imputer, "artifacts/lgb/imputer.joblib")
-    joblib.dump(list(X_train.columns), "artifacts/lgb/features.joblib")
+   
     with open("artifacts/lgb/threshold.json", "w") as f:
         json.dump({"best_threshold": float(best_t)}, f)
     mlflow.log_artifact("artifacts/lgb/imputer.joblib")
-    mlflow.log_artifact("artifacts/lgb/features.joblib")
+    
+    features = list(X.columns)
+    with open("artifacts/lgb/features.json", "w") as f:
+        json.dump(features, f)
+    joblib.dump(features, "artifacts/lgb/features.joblib")
+    mlflow.log_artifact("artifacts/lgb/features.json")
     mlflow.log_artifact("artifacts/lgb/threshold.json")
 
     # Register model
