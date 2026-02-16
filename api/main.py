@@ -65,7 +65,7 @@ import random
 def predict_random_sample(model_key: str):
     bundle = MODELS[model_key]
 
-    pool = bundle.get("inference_pool")
+    pool = bundle["inference_pool"]
     if not pool:
         raise HTTPException(status_code=500, detail="Inference pool not available")
 
@@ -78,7 +78,7 @@ def predict_random_sample(model_key: str):
     input_df = bundle["imputer"].transform(input_df)
 
     # ---- Predict
-    proba = bundle["model"].predict_proba(input_df)[0][1]
+    proba = float(bundle["model"].predict(input_df)[0][1])
     prediction = int(proba >= bundle["threshold"])
 
     return {
@@ -101,25 +101,12 @@ def health():
         "available_models": list(MODELS.keys()),
     }
 
-@app.post("/predict/XGBoost", tags=["Prediction"])
-def predict_xgboost(data: ClientData):
-    try:
-        return _predict_with_model("xgboost", data)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+
 
 @app.post("/predict/XGBoost")
 def predict_xgboost_random():
     return predict_random_sample("xgboost")
 
-
-
-@app.post("/predict/LightGBM", tags=["Prediction"])
-def predict_lightgbm(data: ClientData):
-    try:
-        return _predict_with_model("lightgbm", data)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/predict/LightGBM")
 def predict_lightgbm_random():
