@@ -26,3 +26,4 @@ Thumbs.db
 echo "*.zip" >> .gitignore
 echo "*.pdf" >> .gitignore
 echo "mlruns/" >> .gitignore
+echo "old_mlruns/" >> .gitignore
