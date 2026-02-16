@@ -13,6 +13,25 @@ MLFLOW_DB = BASE_DIR / "notebook" / "mlruns" / "mlflow.db"
 
 mlflow.set_tracking_uri(f"sqlite:///{MLFLOW_DB.as_posix()}")
 
+def load_inference_pool():
+    client = mlflow.tracking.MlflowClient()
+
+    # récupérer le run "inference_pool"
+    experiments = client.search_experiments()
+    runs = client.search_runs(
+        experiment_ids=[exp.experiment_id for exp in experiments],
+        filter_string="tags.mlflow.runName = 'inference_pool'",
+        max_results=1,
+    )
+
+    if not runs:
+        raise RuntimeError("No MLflow run named 'inference_pool' found")
+
+    run = runs[0]
+    artifact_path = Path(run.info.artifact_uri.replace("file:///", ""))
+
+    with open(artifact_path / "inference_pool.json") as f:
+        return json.load(f)
 
 # ======================================================
 # LOAD MODEL + ASSOCIATED ARTIFACTS
@@ -77,7 +96,7 @@ def load_model_bundle(
         "features": features,
         "threshold": threshold,
         "model_name": model_name,
-        "inference_pool": inference_pool,
+        "inference_pool": load_inference_pool(),
         "model_version": model_version.version,
         "run_id": run_id,
     }
