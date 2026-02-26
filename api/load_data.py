@@ -91,9 +91,18 @@ mlflow.set_experiment("HomeCredit_Scoring_all_best_models")
 
 print("MLflow URI:", mlflow.get_tracking_uri())
 
-# ---- Save random inference pool (JSON serializable) - 50 clients from test set
+# ---- Save random inference pool (JSON serializable) - 100 clients from inference test
 with mlflow.start_run(run_name="inference_pool"):
-    inference_pool = (X_test.sample(n=50, random_state=42).to_dict(orient="records"))
+    
+    sample_df = X_test.sample(n=100, random_state=452)
+
+    inference_pool = [
+        {
+        "Client_index": int(idx),
+        "features": row.to_dict()
+        }
+    for idx, row in sample_df.iterrows()
+    ]
 
     with open("inference_pool.json", "w") as f:
         json.dump(inference_pool, f)
@@ -131,16 +140,16 @@ with mlflow.start_run(run_name="XGBoost_best_model"):
     # ---- ARTIFACTS (STRUCTURE API-COMPATIBLE)
     mlflow.log_artifact(
         joblib.dump(imputer, "imputer.joblib")[0],
-        artifact_path="xgb",
+        name="xgb",
     )
     mlflow.log_artifact(
         joblib.dump(features, "features.joblib")[0],
-        artifact_path="xgb",
+        name="xgb",
     )
 
     with open("threshold.json", "w") as f:
         json.dump({"best_threshold": float(threshold)}, f)
-    mlflow.log_artifact("threshold.json", artifact_path="xgb")
+    mlflow.log_artifact("threshold.json", name="xgb")
 
     # ---- MODEL REGISTRY
     mlflow.sklearn.log_model(
@@ -195,5 +204,5 @@ with mlflow.start_run(run_name="LightGBM_best_model"):
         model,
         artifact_path="model",
         registered_model_name="HomeCredit_Scoring_final_LightGBM",
-        input_example=X_train.iloc[:5],
+        input_example=X_train.iloc[:5]
     )
