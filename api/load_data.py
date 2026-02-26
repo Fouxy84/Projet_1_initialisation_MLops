@@ -48,7 +48,7 @@ X = train_df.drop(columns=["TARGET", "SK_ID_CURR"])
 y = train_df["TARGET"]
 
 # sample pour accélérer
-X = X.sample(n=100_000, random_state=42)
+X = X.sample(n=100000, random_state=42)
 y = y.loc[X.index]
 
 print("Train shape:", X.shape)
