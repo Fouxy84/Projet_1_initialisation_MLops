@@ -1,5 +1,5 @@
 # api/main.py
-import time
+
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -74,6 +74,23 @@ def health():
         "list of index":list_index
     }
 
+@app.get("/models/info")
+def models_info():
+    info = {}
+
+    for model_key, bundle in MODELS.items():
+        pool = bundle["inference_pool"]
+
+        info[model_key] = {
+            "model_name": bundle["model_name"],
+            "model_version": bundle["model_version"],
+            "run_id": bundle["run_id"],
+            "threshold": bundle["threshold"],
+            "nb_features": len(bundle["features"]),
+            "nb_clients_inference_pool": len(pool),
+        }
+
+    return info
 
 @app.post("/predict/XGBoost")
 def predict_xgboost_random(request:request_index):
