@@ -88,7 +88,7 @@ def load_model_bundle(
         with open(inference_pool_path, "r") as f:
             inference_pool = json.load(f)
     else:
-        inference_pool = [] 
+        inference_pool = []
 
     return {
         "model": model,
