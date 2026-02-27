@@ -28,7 +28,6 @@ echo "*.pdf" >> .gitignore
 echo "mlruns/" >> .gitignore
 echo "old_mlruns/" >> .gitignore
 
-# ===== MLflow =====
 mlruns/
 notebook/mlruns/
 notebook/old_mlruns/
