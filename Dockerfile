@@ -15,9 +15,9 @@ COPY requirement.txt .
 RUN pip install --no-cache-dir -r requirement.txt
 
 # Code + modèle
-COPY api ./api
-COPY notebook/mlruns ./notebook/mlruns
-
+#COPY api ./api
+#COPY notebook/mlruns ./notebook/mlruns
+COPY . . 
 #port API
 EXPOSE 8000
 
