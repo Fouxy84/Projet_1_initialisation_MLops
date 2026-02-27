@@ -14,7 +14,7 @@ import xgboost as xgb
 import mlflow
 import mlflow.sklearn
 
-from api.utilis import business_cost, find_best_threshold
+from utilis import business_cost, find_best_threshold
 
 
 # ============================================================
