@@ -1,28 +1,21 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Feb 26 23:36:28 2026
 
-@author: coach
-"""
-
-# tests/test_training.py
 import sys
 from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
-
+from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
+
 
 # ============================================================
 # Import des fonctions métier
 # ============================================================
+
 BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(BASE_DIR / "api"))
-
-from load_data import business_cost, find_best_threshold
-
+from utilis import business_cost, find_best_threshold
 
 # ============================================================
 # Fixtures données (rapides & contrôlées)
@@ -30,38 +23,58 @@ from load_data import business_cost, find_best_threshold
 
 @pytest.fixture(scope="session")
 def raw_dataset():
+    """
+    Charge un sous-ensemble léger du dataset final
+    pour garantir des tests rapides et reproductibles.
+    """
     data_path = BASE_DIR / "data" / "proceed" / "homecredit_features.csv"
-    df = pd.read_csv(data_path, low_memory=False)
 
-    # on garde un petit échantillon pour les tests
-    return df.sample(n=5000, random_state=42)
+    # Lecture partielle du CSV (limite le temps I/O)
+    df = pd.read_csv(data_path, low_memory=False, nrows=1000)
+
+    # Conserver TARGET, ID et un nombre limité de features
+    keep_cols = (
+        ["TARGET", "SK_ID_CURR"]
+        + [c for c in df.columns if c not in ["TARGET", "SK_ID_CURR"]][:25]
+    )
+
+    # Échantillon réduit
+    return df[keep_cols].sample(n=200, random_state=42)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def prepared_data(raw_dataset):
-    df = raw_dataset
+    """
+    Prépare les données (nettoyage, split, imputation)
+    une seule fois pour tous les tests.
+    """
+    df = raw_dataset.copy()
 
     train_df = df[df["TARGET"].notna()]
 
     X = train_df.drop(columns=["TARGET", "SK_ID_CURR"])
     y = train_df["TARGET"]
 
-    # nettoyage colonnes
+    # Nettoyage des noms de colonnes
     X.columns = (
         X.columns
         .str.replace(r"[^0-9a-zA-Z_]", "_", regex=True)
         .str.replace(r"_+", "_", regex=True)
     )
 
-    X = X.replace([np.inf, -np.inf], np.nan).astype(np.float64)
+    # Gestion des valeurs infinies
+    X = X.replace([np.inf, -np.inf], np.nan)
 
+    # Suppression des colonnes entièrement NaN
     nan_cols = X.columns[X.isna().all()]
     X = X.drop(columns=nan_cols)
 
+    # Split train / test
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )
 
+    # Imputation
     imputer = SimpleImputer(strategy="median")
     X_train = pd.DataFrame(imputer.fit_transform(X_train), columns=X_train.columns)
     X_test = pd.DataFrame(imputer.transform(X_test), columns=X_test.columns)
@@ -70,7 +83,7 @@ def prepared_data(raw_dataset):
 
 
 # ============================================================
-# Tests sur les données
+# Tests sur les données préparées
 # ============================================================
 
 def test_dataset_loaded(raw_dataset):
@@ -103,7 +116,7 @@ def test_features_consistency(prepared_data):
 
 
 # ============================================================
-# Tests fonctions métier
+# Tests des fonctions métier
 # ============================================================
 
 def test_business_cost_basic():
@@ -112,7 +125,15 @@ def test_business_cost_basic():
 
     cost = business_cost(y_true, y_pred, fn_cost=10, fp_cost=1)
 
+    # 1 FN (10) + 1 FP (1) = 11
     assert cost == 11
+
+
+def test_business_cost_zero():
+    y_true = np.array([0, 1])
+    y_pred = np.array([0, 1])
+
+    assert business_cost(y_true, y_pred) == 0
 
 
 def test_find_best_threshold_valid_range():

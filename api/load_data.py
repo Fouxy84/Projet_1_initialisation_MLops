@@ -14,23 +14,7 @@ import xgboost as xgb
 import mlflow
 import mlflow.sklearn
 
-
-# ============================================================
-# Utils métier
-# ============================================================
-def business_cost(y_true, y_pred, fn_cost=10, fp_cost=1):
-    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-    return fn * fn_cost + fp * fp_cost
-
-
-def find_best_threshold(y_true, y_proba):
-    thresholds = np.arange(0.05, 0.95, 0.05)
-    costs = []
-    for t in thresholds:
-        y_pred = (y_proba >= t).astype(int)
-        costs.append(business_cost(y_true, y_pred))
-    best_idx = np.argmin(costs)
-    return thresholds[best_idx]
+from utilis import business_cost, find_best_threshold
 
 
 # ============================================================
@@ -140,16 +124,16 @@ with mlflow.start_run(run_name="XGBoost_best_model"):
     # ---- ARTIFACTS (STRUCTURE API-COMPATIBLE)
     mlflow.log_artifact(
         joblib.dump(imputer, "imputer.joblib")[0],
-        name="xgb",
+        artifact_path="xgb",
     )
     mlflow.log_artifact(
         joblib.dump(features, "features.joblib")[0],
-        name="xgb",
+        artifact_path="xgb",
     )
 
     with open("threshold.json", "w") as f:
         json.dump({"best_threshold": float(threshold)}, f)
-    mlflow.log_artifact("threshold.json", name="xgb")
+    mlflow.log_artifact("threshold.json", artifact_path="xgb")
 
     # ---- MODEL REGISTRY
     mlflow.sklearn.log_model(

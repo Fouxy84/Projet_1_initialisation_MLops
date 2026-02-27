@@ -7,4 +7,14 @@ scikit-learn
 lightgbm
 joblib
 MLflow
-shap
+fastapi
+uvicorn
+pandas
+numpy
+scikit-learn
+pytest
+httpx
+mlflow
+xgboost
+lightgbm
+joblib

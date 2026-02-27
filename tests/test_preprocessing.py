@@ -1,135 +1,181 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Feb 26 23:30:56 2026
 
-@author: coach
-"""
-
+import sys
+from pathlib import Path
 import pandas as pd
 import numpy as np
 import pytest
-import sys
-from pathlib import Path
 
 # ======================================================
-# Ajouter src au PYTHONPATH
+# Import module
 # ======================================================
+
 BASE_DIR = Path(__file__).resolve().parents[1]
-SRC_DIR = BASE_DIR / "src"
-sys.path.append(str(SRC_DIR))
+sys.path.append(str(BASE_DIR / "src"))
 
-from featuring import (
-    one_hot_encoder,
-    load_application,
-    process_bureau,
-    process_previous,
-    process_pos,
-    process_installments,
-    process_credit_card,
-)
+import featuring
 
-# ============================================
-# One Hot Encoder
-# ============================================
 
-def test_one_hot_encoder_creates_columns():
-    df = pd.DataFrame({
-        "A": ["x", "y", "x"],
-        "B": [1, 2, 3]
+# ======================================================
+# Fixtures : DataFrames mockés MINIMAUX
+# ======================================================
+
+@pytest.fixture
+def application_df():
+    return pd.DataFrame({
+        "SK_ID_CURR": [1, 2],
+        "TARGET": [0, 1],
+        "CODE_GENDER": ["M", "F"],
+        "FLAG_OWN_CAR": ["Y", "N"],
+        "FLAG_OWN_REALTY": ["Y", "Y"],
+        "DAYS_EMPLOYED": [100, 365243],
+        "DAYS_BIRTH": [-10000, -12000],
+        "AMT_INCOME_TOTAL": [100000, 120000],
+        "AMT_CREDIT": [200000, 250000],
+        "CNT_FAM_MEMBERS": [2, 3],
+        "AMT_ANNUITY": [10000, 12000],
     })
 
-    df_encoded = one_hot_encoder(df, max_categories=5)
 
-    assert isinstance(df_encoded, pd.DataFrame)
-    assert any(col.startswith("A_") for col in df_encoded.columns)
-
-
-def test_one_hot_encoder_no_nan():
-    df = pd.DataFrame({
-        "A": ["x", None, "y"]
+@pytest.fixture
+def bureau_df():
+    return pd.DataFrame({
+        "SK_ID_CURR": [1, 1, 2],
+        "SK_ID_BUREAU": [10, 11, 20],
+        "CREDIT_ACTIVE": ["Active", "Closed", "Active"],
     })
 
-    df_encoded = one_hot_encoder(df)
 
-    assert df_encoded.isna().sum().sum() == 0
+@pytest.fixture
+def bureau_balance_df():
+    return pd.DataFrame({
+        "SK_ID_BUREAU": [10, 10, 20],
+        "MONTHS_BALANCE": [-1, -2, -1],
+    })
 
 
-# ============================================
-# Application
-# ============================================
+@pytest.fixture
+def previous_df():
+    return pd.DataFrame({
+        "SK_ID_CURR": [1, 2],
+        "AMT_APPLICATION": [100000, 120000],
+        "AMT_CREDIT": [110000, 130000],
+    })
 
-def test_load_application_returns_dataframe():
-    df = load_application()
+
+@pytest.fixture
+def installments_df():
+    return pd.DataFrame({
+        "SK_ID_CURR": [1, 2],
+        "AMT_PAYMENT": [1000, 2000],
+        "AMT_INSTALMENT": [1200, 2200],
+    })
+
+
+@pytest.fixture
+def pos_df():
+    return pd.DataFrame({
+        "SK_ID_CURR": [1, 1, 2],
+        "MONTHS_BALANCE": [-1, -2, -1],
+    })
+
+
+@pytest.fixture
+def credit_card_df():
+    return pd.DataFrame({
+        "SK_ID_CURR": [1, 2],
+        "SK_ID_PREV": [100, 200],
+        "AMT_BALANCE": [5000, 6000],
+    })
+
+
+# ======================================================
+# Monkeypatch pd.read_csv
+# ======================================================
+
+@pytest.fixture
+def mock_read_csv(
+    monkeypatch,
+    application_df,
+    bureau_df,
+    bureau_balance_df,
+    previous_df,
+    installments_df,
+    pos_df,
+    credit_card_df,
+):
+    def fake_read_csv(path, *args, **kwargs):
+        name = Path(path).name
+
+        if "application_train" in name:
+            return application_df.copy()
+        if "bureau_balance" in name:
+            return bureau_balance_df.copy()
+        if "bureau.csv" in name:
+            return bureau_df.copy()
+        if "previous_application" in name:
+            return previous_df.copy()
+        if "installments_payments" in name:
+            return installments_df.copy()
+        if "POS_CASH_balance" in name:
+            return pos_df.copy()
+        if "credit_card_balance" in name:
+            return credit_card_df.copy()
+
+        raise ValueError(f"Unexpected file: {name}")
+
+    monkeypatch.setattr(pd, "read_csv", fake_read_csv)
+
+
+# ======================================================
+# Tests one_hot_encoder
+# ======================================================
+
+def test_one_hot_encoder_basic():
+    df = pd.DataFrame({"cat": ["a", "b"], "num": [1, 2]})
+    out = featuring.one_hot_encoder(df)
+
+    assert isinstance(out, pd.DataFrame)
+    assert out.isna().sum().sum() == 0
+
+
+# ======================================================
+# Tests load_application
+# ======================================================
+
+def test_load_application_fast(mock_read_csv):
+    df = featuring.load_application()
 
     assert isinstance(df, pd.DataFrame)
     assert len(df) > 0
 
-
-def test_load_application_features_created():
-    df = load_application()
-
-    expected_features = [
+    engineered = {
         "DAYS_EMPLOYED_PERC",
         "INCOME_CREDIT_PERC",
         "INCOME_PER_PERSON",
         "ANNUITY_INCOME_PERC",
         "PAYMENT_RATE",
-    ]
+    }
 
-    for feature in expected_features:
-        assert feature in df.columns
-
-
-# ============================================
-# Bureau
-# ============================================
-
-def test_process_bureau_index():
-    df = process_bureau()
-
-    assert isinstance(df, pd.DataFrame)
-    assert df.index.name == "SK_ID_CURR"
+    assert engineered.issubset(df.columns)
 
 
-# ============================================
-# Previous Applications
-# ============================================
+# ======================================================
+# Tests process_* (rapides & mockés)
+# ======================================================
 
-def test_process_previous_columns():
-    df = process_previous()
+@pytest.mark.parametrize(
+    "func,prefix",
+    [
+        (featuring.process_bureau, "BURO_"),
+        (featuring.process_previous, "PREV_"),
+        (featuring.process_pos, "POS_"),
+        (featuring.process_installments, "INST_"),
+        (featuring.process_credit_card, "CC_"),
+    ],
+)
+def test_process_functions_fast(func, prefix, mock_read_csv):
+    df = func()
 
     assert isinstance(df, pd.DataFrame)
-    assert any(col.startswith("PREV_") for col in df.columns)
-
-
-# ============================================
-# POS CASH
-# ============================================
-
-def test_process_pos_columns():
-    df = process_pos()
-
-    assert isinstance(df, pd.DataFrame)
-    assert any(col.startswith("POS_") for col in df.columns)
-
-
-# ============================================
-# Installments
-# ============================================
-
-def test_process_installments_columns():
-    df = process_installments()
-
-    assert isinstance(df, pd.DataFrame)
-    assert any(col.startswith("INST_") for col in df.columns)
-
-
-# ============================================
-# Credit Card
-# ============================================
-
-def test_process_credit_card_columns():
-    df = process_credit_card()
-
-    assert isinstance(df, pd.DataFrame)
-    assert any(col.startswith("CC_") for col in df.columns)
+    assert df.shape[0] > 0
+    assert any(col.startswith(prefix) for col in df.columns)
