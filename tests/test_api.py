@@ -1,15 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Feb 26 23:39:31 2026
-
-@author: coach
-"""
-
+ 
 # tests/test_api.py
 import sys
 from pathlib import Path
 import numpy as np
-import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
@@ -27,19 +20,18 @@ import main
 # ======================================================
 class DummyModel:
     def predict(self, X):
-        # retourne une probabilité fixe
         return np.array([0.6])
 
 
 # ======================================================
 # Fixture : client API avec MODELS mocké
 # ======================================================
-@pytest.fixture(scope="module")
+@pytest.fixture  # ⚠️ scope=function (par défaut)
 def client(monkeypatch):
     fake_pool = [
         {
             "Client_index": 123,
-            "features": {"feat1": 1.0, "feat2": 2.0}
+            "features": {"feat1": 1.0, "feat2": 2.0},
         }
     ]
 
