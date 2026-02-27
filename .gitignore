@@ -32,3 +32,18 @@ mlruns/
 notebook/mlruns/
 notebook/old_mlruns/
 
+# MLflow
+mlruns/
+api/mlruns/
+
+# Models
+*.pkl
+*.joblib
+*.pt
+models/
+
+# Python
+__pycache__/
+*.pyc
+.env
+
