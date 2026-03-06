@@ -23,10 +23,6 @@ from api.utilis import business_cost, find_best_threshold
 
 @pytest.fixture(scope="session")
 def raw_dataset():
-    """
-    Dataset synthétique pour tests rapides et reproductibles
-    (évite dépendance au dataset réel).
-    """
 
     rng = np.random.default_rng(42)
 
@@ -47,10 +43,6 @@ def raw_dataset():
 
 @pytest.fixture(scope="session")
 def prepared_data(raw_dataset):
-    """
-    Prépare les données (nettoyage, split, imputation)
-    une seule fois pour tous les tests.
-    """
     df = raw_dataset.copy()
 
     train_df = df[df["TARGET"].notna()]
