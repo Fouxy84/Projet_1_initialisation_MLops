@@ -1,0 +1,60 @@
+# Data
+data/raw/
+data/proceed/
+
+# MLflow
+notebook/mlruns
+*.zip
+mlflow.db
+*.log
+.ipynb_checkpoints/
+
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+env/
+
+# Notebooks checkpoints
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+echo "*.zip" >> .gitignore
+echo "*.pdf" >> .gitignore
+echo "mlruns/" >> .gitignore
+echo "old_mlruns/" >> .gitignore
+
+mlruns/
+notebook/mlruns/
+notebook/old_mlruns/
+
+# MLflow
+mlruns/
+api/mlruns/
+
+# Models
+*.pkl
+*.joblib
+*.pt
+models/
+
+# Python
+__pycache__/
+*.pyc
+.env
+models/
+
+echo "api/mlruns/**/*.pkl" >> .gitignore
+echo "models/*.joblib" >> .gitignore
+echo "models/*.pkl" >> .gitignore
+echo "models/*.pt" >> .gitignore
+
+models/
+*.pkl
+*.joblib
+mlruns/
+api/mlruns/

@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pydantic
+pandas
+numpy
+scikit-learn
+lightgbm
+joblib
+mlflow
+pytest
+httpx
+xgboost
+gradio
