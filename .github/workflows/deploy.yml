@@ -1,30 +1,21 @@
-name: Deploy to Hugging Face Space
 
+name: Sync to Hugging Face hub
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+
+  # to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  sync-to-hub:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Fetch full history for git operations
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install huggingface_hub
-        run: pip install huggingface_hub
-
-      - name: Push to Hugging Face Space
+          fetch-depth: 0
+          lfs: true
+      - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          git remote set-url space https://$HF_TOKEN@huggingface.co/spaces/Fouxy84/MLops_1
-          git push space main
+        run: git push https://Fouxy84:$HF_TOKEN@huggingface.co/spaces/Fouxy84/MLops_1 main
