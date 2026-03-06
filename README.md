@@ -38,8 +38,10 @@ mlflow ui
 #API
 uvicorn main:app --reload
 
+
 #Docker
 docker build --no-cache -t homecredit_scorer .
+
 docker run -p 8000:8000 homecredit_scorer
 
 
