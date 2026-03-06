@@ -11,8 +11,8 @@ from typing import Optional
 BASE_DIR = Path(__file__).resolve().parents[1]
 MLFLOW_DB = BASE_DIR / "notebook" / "mlruns" / "mlflow.db"
 
-mlflow.set_tracking_uri(f"sqlite:///{MLFLOW_DB.as_posix()}")
-
+#mlflow.set_tracking_uri(f"sqlite:///{MLFLOW_DB.as_posix()}")
+mlflow.set_tracking_uri("file:./notebook/mlruns")
 def load_inference_pool():
     client = mlflow.tracking.MlflowClient()
 

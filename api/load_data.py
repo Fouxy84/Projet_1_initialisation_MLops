@@ -67,10 +67,8 @@ features = list(X_train.columns)
 # ============================================================
 # MLflow config (UNIQUE SOURCE OF TRUTH)
 # ============================================================
-mlflow.set_tracking_uri(
-    f"sqlite:///{(BASE_DIR / 'notebook' / 'mlruns' / 'mlflow.db').as_posix()}"
-)
-
+#mlflow.set_tracking_uri(f"sqlite:///{(BASE_DIR / 'notebook' / 'mlruns' / 'mlflow.db').as_posix()}")
+mlflow.set_tracking_uri("file:./notebook/mlruns")
 mlflow.set_experiment("HomeCredit_Scoring_all_best_models")
 
 print("MLflow URI:", mlflow.get_tracking_uri())
