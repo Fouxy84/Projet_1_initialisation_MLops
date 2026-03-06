@@ -2,7 +2,11 @@ import gradio as gr
 import requests
 import os
 
+<<<<<<< HEAD
 GITHUB_TOKEN = os.getenv("REMOVED")
+=======
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+>>>>>>> 8f421e6 (update dashbord token access)
 REPO = "Fouxy84/Projet_1_initialisation_MLops"
 
 def trigger_ci():
