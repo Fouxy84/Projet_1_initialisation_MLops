@@ -2,6 +2,7 @@ name: CI - Tests MLOps
 
 env:
     CI: true
+    PYTHONPATH: .
 
 on:
   push:

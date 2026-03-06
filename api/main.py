@@ -4,7 +4,7 @@ import os
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from load_mlflow_models import load_model_bundle
+from api.load_mlflow_models import load_model_bundle
 
 app = FastAPI(title="HomeCredit Scoring API")
 MODELS = {}
