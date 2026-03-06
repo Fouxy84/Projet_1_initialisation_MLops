@@ -6,16 +6,8 @@ numpy
 scikit-learn
 lightgbm
 joblib
-MLflow
-fastapi
-uvicorn
-pandas
-numpy
-scikit-learn
+mlflow
 pytest
 httpx
-mlflow
 xgboost
-lightgbm
-joblib
 gradio
