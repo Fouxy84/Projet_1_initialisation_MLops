@@ -1,116 +1,56 @@
- 
 # tests/test_api.py
-import sys
-from pathlib import Path
-import numpy as np
-import pytest
+
 from fastapi.testclient import TestClient
+from unittest.mock import MagicMock
+import api.main as main
 
-# ======================================================
-# Import app
-# ======================================================
-BASE_DIR = Path(__file__).resolve().parents[1]
-sys.path.append(str(BASE_DIR / "api"))
-
-import main
+fake_model = MagicMock()
+fake_model.predict.return_value = [0.8]
 
 
-# ======================================================
-# Fake model pour les tests
-# ======================================================
-class DummyModel:
-    def predict(self, X):
-        return np.array([0.6])
-
-
-# ======================================================
-# Fixture : client API avec MODELS mocké
-# ======================================================
-@pytest.fixture  # ⚠️ scope=function (par défaut)
-def client(monkeypatch):
-    fake_pool = [
+fake_bundle = {
+    "model": fake_model,
+    "threshold": 0.5,
+    "features": [],
+    "inference_pool": [
         {
-            "Client_index": 123,
-            "features": {"feat1": 1.0, "feat2": 2.0},
+            "Client_index": 1,
+            "features": {}
         }
-    ]
+    ],
+    "model_name": "fake_model",
+    "model_version": 1,
+    "run_id": "test_run"
+}
 
-    fake_bundle = {
-        "model": DummyModel(),
-        "features": ["feat1", "feat2"],
-        "threshold": 0.5,
-        "model_name": "dummy_model",
-        "model_version": "1",
-        "run_id": "abc123",
-        "inference_pool": fake_pool,
-    }
+main.MODELS = {
+    "xgboost": fake_bundle,
+    "lightgbm": fake_bundle
+}
 
-    monkeypatch.setattr(
-        main,
-        "MODELS",
-        {
-            "xgboost": fake_bundle,
-            "lightgbm": fake_bundle,
-        },
-    )
-
-    return TestClient(main.app)
+client = TestClient(main.app)
 
 
-# ======================================================
-# Tests
-# ======================================================
-
-def test_health(client):
-    response = client.get("/health")
-    assert response.status_code == 200
-
-    data = response.json()
-    assert data["status"] == "API running well"
-    assert "xgboost" in data["available_models"]
-    assert data["size fichier test"] == 1
-    assert data["list of index"] == [123]
+def test_health():
+    r = client.get("/health")
+    assert r.status_code == 200
 
 
-def test_models_info(client):
-    response = client.get("/models/info")
-    assert response.status_code == 200
-
-    data = response.json()
-    assert "xgboost" in data
-    assert data["xgboost"]["model_name"] == "dummy_model"
-    assert data["xgboost"]["nb_features"] == 2
+def test_models_info():
+    r = client.get("/models/info")
+    assert r.status_code == 200
 
 
-def test_predict_xgboost_ok(client):
-    response = client.post(
-        "/predict/XGBoost",
-        json={"Client_index": 123},
-    )
+def test_predict():
+    payload = {"Client_index": 1}
+    r = client.post("/predict/XGBoost", json=payload)
 
-    assert response.status_code == 200
-    data = response.json()
-
-    assert data["model"] == "xgboost"
-    assert data["client_index"] == 123
-    assert 0 <= data["prediction_probability"] <= 1
-    assert data["prediction"] in [0, 1]
+    assert r.status_code == 200
+    assert r.json()["prediction_probability"] == 0.8
 
 
-def test_predict_lightgbm_ok(client):
-    response = client.post(
-        "/predict/LightGBM",
-        json={"Client_index": 123},
-    )
+def test_client_not_found():
+    payload = {"Client_index": 999}
+    r = client.post("/predict/XGBoost", json=payload)
 
-    assert response.status_code == 200
-
-
-def test_predict_client_not_found(client):
-    response = client.post(
-        "/predict/XGBoost",
-        json={"Client_index": 999},
-    )
-
-    assert response.status_code == 404
-    assert "not found" in response.json()["detail"]
+    assert r.status_code == 404

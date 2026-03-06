@@ -1,23 +1,24 @@
 # api/main.py
 
+import os
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from load_mlflow_models import load_model_bundle
 
 app = FastAPI(title="HomeCredit Scoring API")
-
+MODELS = {}
 
 # ======================================================
 # LOAD MODELS AT STARTUP (FAIL FAST)
 # ======================================================
-try:
-    MODELS = {
-        "xgboost": load_model_bundle(model_name="HomeCredit_Scoring_final_XGBoost",stage=None,flavor="xgb"),
-        "lightgbm": load_model_bundle(model_name="HomeCredit_Scoring_final_LightGBM",stage=None,flavor="lgb")
-    }
-except Exception as e:
-    raise RuntimeError(f"Failed to load ML models: {e}")
+#try:
+ #   MODELS = {
+  #      "xgboost": load_model_bundle(model_name="HomeCredit_Scoring_final_XGBoost",stage=None,flavor="xgb"),
+  # ""     "lightgbm": load_model_bundle(model_name="HomeCredit_Scoring_final_LightGBM",stage=None,flavor="lgb")
+    #}
+#except Exception as e:
+ #   raise RuntimeError(f"Failed to load ML models: {e}")
 
 
 def predict_random_sample(model_key: str,client_index: int):
@@ -62,6 +63,37 @@ class request_index(BaseModel):
 # ======================================================
 # ROUTES
 # ======================================================
+
+
+# ======================================================
+# LOAD MODELS AT STARTUP
+# ======================================================
+@app.on_event("startup")
+def load_models():
+
+    global MODELS
+
+    # Ne pas charger les modèles pendant les tests CI
+    if os.getenv("CI") == "true":
+        MODELS = {}
+        return
+
+    try:
+        MODELS = {
+            "xgboost": load_model_bundle(
+                model_name="HomeCredit_Scoring_final_XGBoost",
+                stage=None,
+                flavor="xgb"
+            ),
+            "lightgbm": load_model_bundle(
+                model_name="HomeCredit_Scoring_final_LightGBM",
+                stage=None,
+                flavor="lgb"
+            )
+        }
+    except Exception as e:
+        raise RuntimeError(f"Failed to load ML models: {e}")
+    
 @app.get("/health")
 def health():
     pool = MODELS["xgboost"]["inference_pool"]
