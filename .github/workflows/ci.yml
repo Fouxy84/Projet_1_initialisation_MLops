@@ -1,5 +1,8 @@
 name: CI - Tests MLOps
 
+env:
+    CI: true
+
 on:
   push:
     branches:
