@@ -48,3 +48,7 @@ __pycache__/
 .env
 models/
 
+echo "api/mlruns/**/*.pkl" >> .gitignore
+echo "models/*.joblib" >> .gitignore
+echo "models/*.pkl" >> .gitignore
+echo "models/*.pt" >> .gitignore
