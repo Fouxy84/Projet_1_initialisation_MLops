@@ -27,11 +27,7 @@ def greet_json():
 # GRADIO FRONTEND
 # ==========================
 def call_api():
-    try:
-        r = requests.get("http://localhost:7860/")
-        return r.json()
-    except Exception as e:
-        return str(e)
+     return greet_json()
 
 
 with gr.Blocks() as demo:
