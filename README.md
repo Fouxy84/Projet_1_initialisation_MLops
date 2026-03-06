@@ -1,3 +1,14 @@
+---
+title: HomeCredit MLOps API
+emoji: 🤖
+colorFrom: blue
+colorTo: purple
+sdk: gradio
+sdk_version: 4.44.0
+app_file: app.py
+pinned: false
+---
+
 # ML_ops_OC_1
 
 # Home Credit MLOps Project
