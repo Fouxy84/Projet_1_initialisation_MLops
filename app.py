@@ -1,27 +1,38 @@
+
 import gradio as gr
+from fastapi import FastAPI
 import requests
 import os
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 GITHUB_TOKEN = os.getenv("REMOVED")
 =======
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 >>>>>>> 8f421e6 (update dashbord token access)
 REPO = "Fouxy84/Projet_1_initialisation_MLops"
+=======
+# ==========================
+# FASTAPI BACKEND
+# ==========================
+api = FastAPI()
+>>>>>>> d3dc82c (update dashbord app)
 
-def trigger_ci():
-    url = f"https://api.github.com/repos/{REPO}/actions/workflows/ci.yml/dispatches"
-    
-    headers = {
-        "Authorization": f"Bearer {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github+json"
-    }
+@api.get("/")
+def greet_json():
+    return {"Hello": "World!"}
 
-    r = requests.post(url, headers=headers, json={"ref": "main"})
-    
-    if r.status_code == 204:
-        return "CI pipeline launched 🚀"
-    return f"Error: {r.text}"
+
+# ==========================
+# GRADIO FRONTEND
+# ==========================
+def call_api():
+    try:
+        r = requests.get("http://localhost:7860/")
+        return r.json()
+    except Exception as e:
+        return str(e)
+
 
 with gr.Blocks() as demo:
     gr.Markdown("# 🚀 FastAPI + Gradio Demo")
@@ -33,5 +44,5 @@ with gr.Blocks() as demo:
     btn.click(call_api, outputs=output)
 
 
-# Mount Gradio inside FastAPI
+
 app = gr.mount_gradio_app(api, demo, path="/")
