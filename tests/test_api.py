@@ -3,6 +3,7 @@
 from fastapi.testclient import TestClient
 from unittest.mock import MagicMock
 import api.main as main
+#import main 
 
 fake_model = MagicMock()
 fake_model.predict.return_value = [0.8]

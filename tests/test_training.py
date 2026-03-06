@@ -7,6 +7,8 @@ import pytest
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
+from api.utilis import business_cost, find_best_threshold
+#from utilis import business_cost, find_best_threshold
 
 
 # ============================================================
@@ -15,7 +17,7 @@ from sklearn.impute import SimpleImputer
 
 #BASE_DIR = Path(__file__).resolve().parents[1]
 #sys.path.append(str(BASE_DIR / "api"))
-from api.utilis import business_cost, find_best_threshold
+
 
 # ============================================================
 # Fixtures données (rapides & contrôlées)
