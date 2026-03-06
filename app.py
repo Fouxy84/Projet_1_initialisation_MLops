@@ -1,23 +1,23 @@
 import gradio as gr
-from fastapi import FastAPI
+import requests
+import os
 
-# ==========================
-# FASTAPI BACKEND
-# ==========================
-api = FastAPI()
+GITHUB_TOKEN = os.getenv("REMOVED")
+REPO = "Fouxy84/Projet_1_initialisation_MLops"
 
-@api.get("/hello")
-def greet_json():
-    return {"Hello": "World!"}
+def trigger_ci():
+    url = f"https://api.github.com/repos/{REPO}/actions/workflows/ci.yml/dispatches"
+    
+    headers = {
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github+json"
+    }
 
-
-# ==========================
-# GRADIO FRONTEND
-# ==========================
-def call_api():
-    # appel direct de la fonction backend
-    return greet_json()
-
+    r = requests.post(url, headers=headers, json={"ref": "main"})
+    
+    if r.status_code == 204:
+        return "CI pipeline launched 🚀"
+    return f"Error: {r.text}"
 
 with gr.Blocks() as demo:
     gr.Markdown("# 🚀 FastAPI + Gradio Demo")
