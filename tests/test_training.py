@@ -13,9 +13,9 @@ from sklearn.impute import SimpleImputer
 # Import des fonctions métier
 # ============================================================
 
-BASE_DIR = Path(__file__).resolve().parents[1]
-sys.path.append(str(BASE_DIR / "api"))
-from utilis import business_cost, find_best_threshold
+#BASE_DIR = Path(__file__).resolve().parents[1]
+#sys.path.append(str(BASE_DIR / "api"))
+from api.utilis import business_cost, find_best_threshold
 
 # ============================================================
 # Fixtures données (rapides & contrôlées)
@@ -24,23 +24,26 @@ from utilis import business_cost, find_best_threshold
 @pytest.fixture(scope="session")
 def raw_dataset():
     """
-    Charge un sous-ensemble léger du dataset final
-    pour garantir des tests rapides et reproductibles.
+    Dataset synthétique pour tests rapides et reproductibles
+    (évite dépendance au dataset réel).
     """
-    data_path = BASE_DIR / "data" / "proceed" / "homecredit_features.csv"
 
-    # Lecture partielle du CSV (limite le temps I/O)
-    df = pd.read_csv(data_path, low_memory=False, nrows=1000)
+    rng = np.random.default_rng(42)
 
-    # Conserver TARGET, ID et un nombre limité de features
-    keep_cols = (
-        ["TARGET", "SK_ID_CURR"]
-        + [c for c in df.columns if c not in ["TARGET", "SK_ID_CURR"]][:25]
+    n_samples = 200
+    n_features = 25
+
+    data = rng.normal(size=(n_samples, n_features))
+
+    df = pd.DataFrame(
+        data,
+        columns=[f"feature_{i}" for i in range(n_features)]
     )
 
-    # Échantillon réduit
-    return df[keep_cols].sample(n=200, random_state=42)
+    df["TARGET"] = rng.integers(0, 2, size=n_samples)
+    df["SK_ID_CURR"] = range(n_samples)
 
+    return df
 
 @pytest.fixture(scope="session")
 def prepared_data(raw_dataset):
