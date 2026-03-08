@@ -4,7 +4,6 @@ from fastapi.testclient import TestClient
 from unittest.mock import MagicMock
 import api.main as main
 import numpy as np
-#import main 
 
 fake_model = MagicMock()
 fake_model.predict.return_value = np.array([0.8])
@@ -24,13 +23,6 @@ fake_bundle = {
     "run_id": "test_run"
 }
 
-client = TestClient(main.app)
-
-main.MODELS = {
-    "xgboost": fake_bundle,
-    "lightgbm": fake_bundle
-}
-client = TestClient(main.app)
 
 def setup_module():
     main.MODELS = {
@@ -38,20 +30,26 @@ def setup_module():
         "lightgbm": fake_bundle
     }
 
+
 def test_health():
-    r = client.get("/health")
-    assert r.status_code == 200
+    with TestClient(main.app) as client:
+        r = client.get("/health")
+        assert r.status_code == 200
+
 
 def test_models_info():
-    r = client.get("/models/info")
-    assert r.status_code == 200
+    with TestClient(main.app) as client:
+        r = client.get("/models/info")
+        assert r.status_code == 200
+
 
 def test_predict():
-    main.MODELS = {"xgboost": fake_bundle,"lightgbm": fake_bundle}
+    main.MODELS = {"xgboost": fake_bundle, "lightgbm": fake_bundle}
 
     with TestClient(main.app) as client:
         payload = {"Client_index": 1}
         r = client.post("/predict/XGBoost", json=payload)
+
         data = r.json()
 
         assert r.status_code == 200
@@ -59,15 +57,21 @@ def test_predict():
         assert "prediction" in data
         assert abs(data["prediction_probability"] - 0.8) < 1e-6
 
+
 def test_client_not_found():
-    payload = {"Client_index": 999}
-    r = client.post("/predict/XGBoost", json=payload)
-    assert r.status_code == 404
+    with TestClient(main.app) as client:
+        payload = {"Client_index": 999}
+        r = client.post("/predict/XGBoost", json=payload)
+        assert r.status_code == 404
+
 
 def test_missing_field():
-    r = client.post("/predict/XGBoost",json={})
-    assert r.status_code == 422
+    with TestClient(main.app) as client:
+        r = client.post("/predict/XGBoost", json={})
+        assert r.status_code == 422
+
 
 def test_wrong_type():
-    r = client.post("/predict/XGBoost",json={"Client_index": "abc"})
-    assert r.status_code == 422
+    with TestClient(main.app) as client:
+        r = client.post("/predict/XGBoost", json={"Client_index": "abc"})
+        assert r.status_code == 422
