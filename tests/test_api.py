@@ -44,8 +44,7 @@ def test_models_info():
 
 
 def test_predict():
-    main.MODELS = {"xgboost": fake_bundle, "lightgbm": fake_bundle}
-
+    #main.MODELS = {"xgboost": fake_bundle, "lightgbm": fake_bundle}
     with TestClient(main.app) as client:
         payload = {"Client_index": 1}
         r = client.post("/predict/XGBoost", json=payload)

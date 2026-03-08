@@ -77,9 +77,6 @@ def predict_random_sample(model_key: str,client_index: int):
     }
     log_prediction(log_data)
     
-    with open(LOG_FILE,"a") as f:
-        f.write(json.dump(log_data) + "\n")
-    
     return {
         "model": model_key,
         "client_index": client_index,
