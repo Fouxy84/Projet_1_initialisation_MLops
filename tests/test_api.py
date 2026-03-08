@@ -9,6 +9,7 @@ import numpy as np
 fake_model = MagicMock()
 fake_model.predict.return_value = np.array([0.8])
 
+client = TestClient(main.app)
 
 fake_bundle = {
     "model": fake_model,
@@ -25,50 +26,31 @@ fake_bundle = {
     "run_id": "test_run"
 }
 
-main.MODELS = {
-    "xgboost": fake_bundle,
-    "lightgbm": fake_bundle
-}
-
-client = TestClient(main.app)
-
+main.MODELS = {"xgboost": fake_bundle,"lightgbm": fake_bundle}
 
 def test_health():
     r = client.get("/health")
     assert r.status_code == 200
 
-
 def test_models_info():
     r = client.get("/models/info")
     assert r.status_code == 200
 
-
 def test_predict():
     payload = {"Client_index": 1}
     r = client.post("/predict/XGBoost", json=payload)
-
     assert r.status_code == 200
     assert abs(r.json()["prediction_probability"] - 0.8) < 1e-6
-
 
 def test_client_not_found():
     payload = {"Client_index": 999}
     r = client.post("/predict/XGBoost", json=payload)
-
     assert r.status_code == 404
 
 def test_missing_field():
-    response = client.post(
-        "/predict/XGBoost",
-        json={}
-    )
-
-    assert response.status_code == 422
+    r = client.post("/predict/XGBoost",json={})
+    assert r.status_code == 422
 
 def test_wrong_type():
-
-    response = client.post(
-        "/predict/XGBoost",
-        json={"Client_index": "abc"}
-    )
-    assert response.status_code == 422
+    r = client.post("/predict/XGBoost",json={"Client_index": "abc"})
+    assert r.status_code == 422
