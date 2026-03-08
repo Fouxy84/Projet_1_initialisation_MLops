@@ -12,5 +12,5 @@ httpx
 xgboost
 gradio
 elasticsearch
-evidently
+evidently==0.4.17
 pathlib
