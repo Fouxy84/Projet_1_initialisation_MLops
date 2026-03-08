@@ -55,3 +55,20 @@ def test_client_not_found():
     r = client.post("/predict/XGBoost", json=payload)
 
     assert r.status_code == 404
+
+def test_missing_field():
+    response = client.post(
+        "/predict/XGBoost",
+        json={}
+    )
+
+    assert response.status_code == 422
+
+def test_wrong_type():
+
+    response = client.post(
+        "/predict/XGBoost",
+        json={"Client_index": "abc"}
+    )
+
+    assert response.status_code == 422

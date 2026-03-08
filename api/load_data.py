@@ -76,7 +76,7 @@ print("MLflow URI:", mlflow.get_tracking_uri())
 # ---- Save random inference pool (JSON serializable) - 100 clients from inference test
 with mlflow.start_run(run_name="inference_pool"):
     
-    sample_df = X_test.sample(n=100, random_state=452)
+    sample_df = X_test.sample(n=500, random_state=452)
 
     inference_pool = [
         {

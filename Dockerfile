@@ -11,8 +11,8 @@ ENV MLFLOW_TRACKING_URI=file:/app/notebook/mlruns
 WORKDIR /app
 
 # Python deps
-COPY requirement.txt .
-RUN pip install --no-cache-dir -r requirement.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Code + modèle
 
