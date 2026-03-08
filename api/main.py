@@ -16,7 +16,7 @@ from api.load_mlflow_models import load_model_bundle
 from api.logger import log_prediction
 from elasticsearch import Elasticsearch 
 
-log_data = Path("prediction_logs.json")
+LOG_FILE = "prediction_logs.json"
 
 app = FastAPI(title="HomeCredit Scoring API")
 MODELS = {}
@@ -103,10 +103,7 @@ def load_models():
 
     # Ne pas charger les modèles pendant les tests CI
     if os.getenv("CI") == "true":
-         with open("prediction_logs.json", "a") as f:
-            json.dump(log_data, f)
-            f.write("\n")
-    return
+     return
 
     try:
         MODELS = {

@@ -6,7 +6,7 @@ import api.main as main
 import numpy as np
 
 fake_model = MagicMock()
-fake_model.predict.return_value = np.array([0.8])
+fake_model.predict_proba.return_value = np.array([[0.2, 0.8]])
 
 fake_bundle = {
     "model": fake_model,
