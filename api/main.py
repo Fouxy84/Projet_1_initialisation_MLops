@@ -15,8 +15,7 @@ from evidently.metric_preset import DataDriftPreset
 from api.load_mlflow_models import load_model_bundle
 from api.logger import log_prediction
 from elasticsearch import Elasticsearch 
-from evidently.report import Report
-from evidently.metric_preset import DataDriftPreset
+
 LOG_FILE = Path("prediction_logs.json")
 
 app = FastAPI(title="HomeCredit Scoring API")
