@@ -30,6 +30,13 @@ main.MODELS = {
     "xgboost": fake_bundle,
     "lightgbm": fake_bundle
 }
+client = TestClient(main.app)
+
+def setup_module():
+    main.MODELS = {
+        "xgboost": fake_bundle,
+        "lightgbm": fake_bundle
+    }
 
 def test_health():
     r = client.get("/health")
