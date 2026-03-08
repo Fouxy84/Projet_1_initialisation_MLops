@@ -3,10 +3,11 @@
 from fastapi.testclient import TestClient
 from unittest.mock import MagicMock
 import api.main as main
+import numpy as np
 #import main 
 
 fake_model = MagicMock()
-fake_model.predict.return_value = [0.8]
+fake_model.predict.return_value = np.array([0.8])
 
 
 fake_bundle = {
@@ -47,7 +48,7 @@ def test_predict():
     r = client.post("/predict/XGBoost", json=payload)
 
     assert r.status_code == 200
-    assert r.json()["prediction_probability"] == 0.8
+    assert abs(r.json()["prediction_probability"] - 0.8) < 1e-6
 
 
 def test_client_not_found():
@@ -70,5 +71,4 @@ def test_wrong_type():
         "/predict/XGBoost",
         json={"Client_index": "abc"}
     )
-
     assert response.status_code == 422
