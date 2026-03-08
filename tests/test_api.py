@@ -7,9 +7,7 @@ import numpy as np
 #import main 
 
 fake_model = MagicMock()
-fake_model.predict.return_value = np.array([0.8])
-
-client = TestClient(main.app)
+fake_model.predict.return_value = np.array([0])
 
 fake_bundle = {
     "model": fake_model,
@@ -26,7 +24,12 @@ fake_bundle = {
     "run_id": "test_run"
 }
 
-main.MODELS = {"xgboost": fake_bundle,"lightgbm": fake_bundle}
+client = TestClient(main.app)
+
+main.MODELS = {
+    "xgboost": fake_bundle,
+    "lightgbm": fake_bundle
+}
 
 def test_health():
     r = client.get("/health")
