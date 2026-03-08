@@ -6,18 +6,37 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
 import mlflow
-from api.load_mlflow_models import load_model_bundle
-#from load_mlflow_models import load_model_bundle
+
 import time
 import json
 from pathlib import Path
 from evidently.report import Report
 from evidently.metric_preset import DataDriftPreset
+from api.load_mlflow_models import load_model_bundle
 from api.logger import log_prediction
+from elasticsearch import Elasticsearch 
+from evidently.report import Report
+from evidently.metric_preset import DataDriftPreset
 LOG_FILE = Path("prediction_logs.json")
 
 app = FastAPI(title="HomeCredit Scoring API")
 MODELS = {}
+
+# ======================================================
+# ELASTICSEARCH CONNECTION
+# ======================================================
+
+es = Elasticsearch("http://localhost:9200")
+
+def log_prediction(data):
+
+    try:
+        es.index(
+            index="mlops_predictions",
+            document=data
+        )
+    except Exception as e:
+        print("Elastic logging failed:", e)
 
 # ======================================================
 # LOAD MODELS AT STARTUP (FAIL FAST)
@@ -58,6 +77,7 @@ def predict_random_sample(model_key: str,client_index: int):
     "latency": latency
     }
     log_prediction(log_data)
+    
     with open(LOG_FILE,"a") as f:
         f.write(json.dump(log_data) + "\n")
     
@@ -136,15 +156,20 @@ def models_info():
 @app.get("/monitoring/drift")
 def detect_drift():
 
-    if not LOG_FILE.exists():
-        return {"message": "No logs yet"}
+    response = es.search(
+        index="mlops_predictions",
+        size=500
+    )
 
-    current = pd.read_json(LOG_FILE, lines=True)
+    data = [hit["_source"] for hit in response["hits"]["hits"]]
 
-    if len(current) < 10:
-        return {"message": "Not enough data for drift analysis"}
+    df = pd.DataFrame(data)
 
-    reference = current.iloc[:10]
+    if len(df) < 20:
+        return {"message": "Not enough data for drift detection"}
+
+    reference = df.iloc[:10]
+    current = df.iloc[10:]
 
     report = Report(metrics=[DataDriftPreset()])
 
@@ -153,10 +178,23 @@ def detect_drift():
         current_data=current
     )
 
-    report_path = "drift_report.html"
-    report.save_html(report_path)
+    result = report.as_dict()
 
-    return {"message": "Drift report generated", "report": report_path}
+    drift_score = result["metrics"][0]["result"]["dataset_drift"]
+    drift_share = result["metrics"][0]["result"]["share_of_drifted_columns"]
+
+    drift_doc = {
+        "timestamp": time.time(),
+        "dataset_drift": drift_score,
+        "drifted_features_share": drift_share
+    }
+
+    es.index(
+        index="mlops_drift_metrics",
+        document=drift_doc
+    )
+
+    return drift_doc
 
 @app.post("/predict/XGBoost")
 def predict_xgboost_random(request:request_index):

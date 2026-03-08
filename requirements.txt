@@ -12,7 +12,7 @@ httpx
 xgboost
 gradio
 elasticsearch
-evidentlyai
+evidently
 datetime
 json
 pathlib
