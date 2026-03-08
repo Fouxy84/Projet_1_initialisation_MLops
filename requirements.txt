@@ -13,6 +13,4 @@ xgboost
 gradio
 elasticsearch
 evidently
-datetime
-json
 pathlib
