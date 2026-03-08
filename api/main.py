@@ -103,7 +103,6 @@ def load_models():
 
     # Ne pas charger les modèles pendant les tests CI
     if os.getenv("CI") == "true":
-        MODELS = {}
         return
 
     try:
