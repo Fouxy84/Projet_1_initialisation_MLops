@@ -41,6 +41,14 @@ uvicorn main:app --reload
 
 #Docker
 docker build --no-cache -t homecredit_scorer .
-
 docker run -p 8000:8000 homecredit_scorer
+
+#Pipeline CI/CD:
+1. Push du code sur GitHub
+2. GitHub Actions lance les tests avec pytest
+3. Si les tests passent :
+   - build de l'image Docker
+   - lancement du conteneur pour test API
+4. Déploiement automatique vers Hugging Face Spaces MLops_2
+5. L’API est accessible via Swagger Localhost:8000/docs
 

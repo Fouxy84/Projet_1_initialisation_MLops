@@ -11,3 +11,8 @@ pytest
 httpx
 xgboost
 gradio
+elasticsearch
+evidentlyai
+datetime
+json
+pathlib
