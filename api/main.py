@@ -66,7 +66,7 @@ class request_index(BaseModel):
 # ======================================================
 # LOAD MODELS AT STARTUP
 # ======================================================
-@app.on_event("startup")
+@app.lifespan("startup")
 def load_models():
 
     global MODELS
