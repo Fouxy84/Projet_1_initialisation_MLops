@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run container
         run: |
-          docker run -d -p 8000:8000 --name homecredit_api
+          docker run -d -p 8000:8000 --name homecredit_api homecredit_api
           sleep 10
           curl http://localhost:8000/health
 

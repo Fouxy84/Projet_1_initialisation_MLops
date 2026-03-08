@@ -123,6 +123,13 @@ def load_models():
     
 @app.get("/health")
 def health():
+    if not MODELS:
+        return {
+            "status": "API running in CI mode (no models loaded)",
+            "available_models": [],
+            "size fichier test": 0,
+            "list of index": []
+        }
     pool = MODELS["xgboost"]["inference_pool"]
     list_index = [item["Client_index"] for item in pool] 
     
