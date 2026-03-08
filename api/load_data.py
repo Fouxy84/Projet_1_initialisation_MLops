@@ -141,6 +141,9 @@ with mlflow.start_run(run_name="XGBoost_best_model"):
         input_example=X_train.iloc[:5],
     )
 
+    # Save model to artifacts
+    joblib.dump(model, "artifacts/xgb/model.joblib")
+
 
 # ============================================================
 # LightGBM
@@ -188,3 +191,6 @@ with mlflow.start_run(run_name="LightGBM_best_model"):
         registered_model_name="HomeCredit_Scoring_final_LightGBM",
         input_example=X_train.iloc[:5]
     )
+
+    # Save model to artifacts
+    joblib.dump(model, "artifacts/lgb/model.joblib")

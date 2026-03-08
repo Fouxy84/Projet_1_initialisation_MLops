@@ -14,23 +14,7 @@ MLFLOW_DB = BASE_DIR / "notebook" / "mlruns" / "mlflow.db"
 #mlflow.set_tracking_uri(f"sqlite:///{MLFLOW_DB.as_posix()}")
 mlflow.set_tracking_uri("file:./notebook/mlruns")
 def load_inference_pool():
-    client = mlflow.tracking.MlflowClient()
-
-    # récupérer le run "inference_pool"
-    experiments = client.search_experiments()
-    runs = client.search_runs(
-        experiment_ids=[exp.experiment_id for exp in experiments],
-        filter_string="tags.mlflow.runName = 'inference_pool'",
-        max_results=1,
-    )
-
-    if not runs:
-        raise RuntimeError("No MLflow run named 'inference_pool' found")
-
-    run = runs[0]
-    artifact_path = Path(run.info.artifact_uri.replace("file:///", ""))
-
-    with open(artifact_path / "inference_pool.json") as f:
+    with open("/app/api/inference_pool.json") as f:
         return json.load(f)
 
 # ======================================================
@@ -42,16 +26,6 @@ def load_model_bundle(
     flavor: str = "xgb",
 ):
    
-    # ---- Resolve model URI
-    model_uri = (
-        f"models:/{model_name}/{stage}"
-        if stage
-        else f"models:/{model_name}/latest"
-    )
-
-    # ---- Load model (pyfunc wrapper)
-    model = mlflow.pyfunc.load_model(model_uri)
-
     client = mlflow.tracking.MlflowClient()
 
     # ---- Resolve model version
@@ -67,13 +41,24 @@ def load_model_bundle(
     model_version = versions[0]
     run_id = model_version.run_id
     run = client.get_run(run_id)
-    artifact_root = Path(run.info.artifact_uri.replace("file:///", ""))
-
+    
+    # Adjust artifact_uri for container environment
+    artifact_uri = run.info.artifact_uri
+    host_path = "file:///C:/Users/coach/Desktop/datascientest/OpenClassrooms/Projects_MLops/Projet_MLops_1/Projet_1_initialisation_MLops/"
+    if artifact_uri.startswith(host_path):
+        artifact_uri = artifact_uri.replace(host_path, "file:/app/")
+    
+    # In container, artifacts are at /app/artifacts
+    artifact_root = Path("/app/artifacts")
+    
     flavor_dir = artifact_root / flavor
     if not flavor_dir.exists():
         raise FileNotFoundError(
             f"Artifacts folder '{flavor}' not found for model '{model_name}'"
         )
+
+    # ---- Load model (sklearn model)
+    model = joblib.load(flavor_dir / "model.joblib")
 
     # ---- Load inference artifacts
     imputer = joblib.load(flavor_dir / "imputer.joblib")

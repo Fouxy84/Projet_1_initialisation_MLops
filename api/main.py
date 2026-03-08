@@ -4,8 +4,10 @@ import os
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-#from api.load_mlflow_models import load_model_bundle
-from load_mlflow_models import load_model_bundle
+import uvicorn
+import mlflow
+from api.load_mlflow_models import load_model_bundle
+#from load_mlflow_models import load_model_bundle
 
 app = FastAPI(title="HomeCredit Scoring API")
 MODELS = {}
@@ -39,7 +41,7 @@ def predict_random_sample(model_key: str,client_index: int):
     input_df = input_df.reindex(columns=bundle["features"])
     #input_df = bundle["imputer"].transform(input_df)
 
-    pred = bundle["model"].predict(input_df)
+    pred = bundle["model"].predict_proba(input_df)[:, 1]
     # Gestion robuste des sorties MLflow
     if hasattr(pred, "__len__"):
         proba = float(pred[0])
@@ -130,7 +132,8 @@ def predict_lightgbm_random(request:request_index):
     return predict_random_sample("lightgbm",request.Client_index)
 
 if __name__ == "__main__":
-    import uvicorn
+    
+    print("MLFLOW URI:", mlflow.get_tracking_uri())
     uvicorn.run(
         app,
         host="0.0.0.0",
