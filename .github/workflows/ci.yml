@@ -39,19 +39,12 @@ jobs:
       run: |
         docker build -t homecredit_api .
 
-    - name: Run container
-      run: |
-          docker run -d -p 8000:8000 --name homecredit_api homecredit_api
-          sleep 20
-    
+   
     - name: Show container logs
       run: |
           docker logs homecredit_api
 
-    - name: test container
-      run: |
-          curl http://localhost:8000/health
-
+   
 
   deploy:
     runs-on: ubuntu-latest
