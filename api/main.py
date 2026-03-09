@@ -144,6 +144,7 @@ def models_info():
     for model_key, bundle in MODELS.items():
         pool = bundle["inference_pool"]
 
+
         info[model_key] = {
             "model_name": bundle["model_name"],
             "model_version": bundle["model_version"],
