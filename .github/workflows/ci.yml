@@ -39,12 +39,6 @@ jobs:
       run: |
         docker build -t homecredit_api .
 
-   
-    - name: Show container logs
-      run: |
-          docker logs homecredit_api
-
-   
 
   deploy:
     runs-on: ubuntu-latest
