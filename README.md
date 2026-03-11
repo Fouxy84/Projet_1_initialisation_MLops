@@ -52,3 +52,6 @@ docker run -p 8000:8000 homecredit_scorer
 4. Déploiement automatique vers Hugging Face Spaces MLops_2
 5. L’API est accessible via Swagger Localhost:8000/docs
 
+# Monitoring
+lancement docker-compose: docker-compose up -d
+
