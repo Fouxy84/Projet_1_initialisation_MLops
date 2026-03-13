@@ -10,17 +10,25 @@ from datetime import datetime
 import time
 import json
 from pathlib import Path
+
 from evidently.report import Report
 from evidently.metric_preset import DataDriftPreset
+
 from api.load_mlflow_models import load_model_bundle
 from api.logger import log_prediction
-#from elasticsearch import Elasticsearch 
+from elasticsearch import Elasticsearch 
 
 LOG_FILE = "prediction_logs.json"
 
 app = FastAPI(title="HomeCredit Scoring API")
 MODELS = {}
 
+# ======================================================
+# ELASTICSEARCH CONNECTION
+# ======================================================
+
+ELASTIC_HOST = os.getenv("ELASTIC_HOST", "http://localhost:9200")
+es = Elasticsearch(ELASTIC_HOST)
 
 # ======================================================
 # LOAD MODELS AT STARTUP (FAIL FAST)
@@ -52,6 +60,7 @@ def predict_random_sample(model_key: str,client_index: int):
 
     prediction = int(proba >= bundle["threshold"])
     latency = time.time() - start_time
+
     log_data = {
     "timestamp": datetime.utcnow().isoformat(),
     "model": model_key,
@@ -60,6 +69,7 @@ def predict_random_sample(model_key: str,client_index: int):
     "prediction": prediction,
     "latency": latency
     }
+
     log_prediction(log_data)
     
     return {
@@ -144,6 +154,9 @@ def models_info():
 @app.get("/monitoring/drift")
 def detect_drift():
 
+    if not es.indices.exists(index="mlops_predictions"):
+        return {"message": "No prediction logs yet"}
+     
     response = es.search(
         index="mlops_predictions",
         size=500
@@ -155,7 +168,7 @@ def detect_drift():
 
     if len(df) < 20:
         return {"message": "Not enough data for drift detection"}
-
+    df = df.select_dtypes(include=["number"])
     reference = df.iloc[:10]
     current = df.iloc[10:]
 
@@ -172,7 +185,7 @@ def detect_drift():
     drift_share = result["metrics"][0]["result"]["share_of_drifted_columns"]
 
     drift_doc = {
-        "timestamp": time.time(),
+        "timestamp": datetime.utcnow().isoformat(),
         "dataset_drift": drift_score,
         "drifted_features_share": drift_share
     }
