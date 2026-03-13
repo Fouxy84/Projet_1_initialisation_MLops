@@ -10,9 +10,13 @@ from datetime import datetime
 import time
 import json
 from pathlib import Path
-
+import cProfile
+import pstats
+import io
 from evidently.report import Report
 from evidently.metric_preset import DataDriftPreset
+import onnxruntime as rt
+import numpy as np
 
 from api.load_mlflow_models import load_model_bundle
 from api.logger import log_prediction
@@ -22,6 +26,9 @@ LOG_FILE = "prediction_logs.json"
 
 app = FastAPI(title="HomeCredit Scoring API")
 MODELS = {}
+
+session = rt.InferenceSession("model.onnx")
+input_name = session.get_inputs()[0].name
 
 # ======================================================
 # ELASTICSEARCH CONNECTION
@@ -35,6 +42,8 @@ es = Elasticsearch(ELASTIC_HOST)
 # ======================================================
 
 def predict_random_sample(model_key: str,client_index: int):
+    profiler = cProfile.Profile()
+    profiler.enable()
     start_time = time.time()
     bundle = MODELS[model_key]
     pool = bundle["inference_pool"]
@@ -51,7 +60,12 @@ def predict_random_sample(model_key: str,client_index: int):
     input_df = input_df.reindex(columns=bundle["features"])
     #input_df = bundle["imputer"].transform(input_df)
 
-    pred = bundle["model"].predict_proba(input_df)[:, 1]
+    #pred = bundle["model"].predict_proba(input_df)[:, 1]
+    
+    input_array = input_df.to_numpy().astype(np.float32)
+    outputs = session.run(None, {input_name: input_array})
+    proba = float(outputs[1][0][1])
+
     # Gestion robuste des sorties MLflow
     if hasattr(pred, "__len__"):
         proba = float(pred[0])
@@ -71,6 +85,13 @@ def predict_random_sample(model_key: str,client_index: int):
     }
 
     log_prediction(log_data)
+    profiler.disable()
+
+    s = io.StringIO()
+    ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
+    ps.print_stats(10)
+
+    print(s.getvalue())
     
     return {
         "model": model_key,

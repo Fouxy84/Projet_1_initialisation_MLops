@@ -14,6 +14,10 @@ import xgboost as xgb
 import mlflow
 import mlflow.sklearn
 
+import onnxmltools
+import onnx
+from skl2onnx.common.data_types import FloatTensorType
+
 from utilis import business_cost, find_best_threshold
 
 
@@ -104,6 +108,11 @@ with mlflow.start_run(run_name="XGBoost_best_model"):
     )
 
     model.fit(X_train, y_train)
+    
+    initial_type = [("input", FloatTensorType([None, len(features)]))]
+    onnx_model = onnxmltools.convert_xgboost(model,initial_types=initial_type)
+    onnx.save_model(onnx_model, "xgb_model.onnx")
+    mlflow.log_artifact("xgb_model.onnx", artifact_path="xgb")
 
     y_proba = model.predict_proba(X_test)[:, 1]
     threshold = find_best_threshold(y_test, y_proba)
@@ -157,6 +166,11 @@ with mlflow.start_run(run_name="LightGBM_best_model"):
     )
 
     model.fit(X_train, y_train)
+    
+    initial_type = [("input", FloatTensorType([None, len(features)]))]
+    onnx_model = onnxmltools.convert_lightgbm(model,initial_types=initial_type)
+    onnx.save_model(onnx_model, "lgb_model.onnx")
+    mlflow.log_artifact("lgb_model.onnx", artifact_path="lgb")
 
     y_proba = model.predict_proba(X_test)[:, 1]
     threshold = find_best_threshold(y_test, y_proba)
