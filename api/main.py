@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
 import mlflow
-
+from datetime import datetime
 import time
 import json
 from pathlib import Path
@@ -14,28 +14,13 @@ from evidently.report import Report
 from evidently.metric_preset import DataDriftPreset
 from api.load_mlflow_models import load_model_bundle
 from api.logger import log_prediction
-from elasticsearch import Elasticsearch 
+#from elasticsearch import Elasticsearch 
 
 LOG_FILE = "prediction_logs.json"
 
 app = FastAPI(title="HomeCredit Scoring API")
 MODELS = {}
 
-# ======================================================
-# ELASTICSEARCH CONNECTION
-# ======================================================
-
-es = Elasticsearch("http://localhost:9200")
-
-def log_prediction(data):
-
-    try:
-        es.index(
-            index="mlops_predictions",
-            document=data
-        )
-    except Exception as e:
-        print("Elastic logging failed:", e)
 
 # ======================================================
 # LOAD MODELS AT STARTUP (FAIL FAST)
@@ -68,7 +53,7 @@ def predict_random_sample(model_key: str,client_index: int):
     prediction = int(proba >= bundle["threshold"])
     latency = time.time() - start_time
     log_data = {
-    "timestamp": time.time(),
+    "timestamp": datetime.utcnow().isoformat()
     "model": model_key,
     "client_index": client_index,
     "prediction_probability": proba,

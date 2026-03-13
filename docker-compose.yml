@@ -1,0 +1,49 @@
+services:
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    networks:
+      - mlops_network
+
+  fluentd:
+    image: fluent/fluentd:v1.16
+    container_name: fluentd
+    volumes:
+          - ./fluentd/fluent.conf:/fluentd/etc/fluent.conf
+          - ./logs:/logs
+    depends_on:
+         - elasticsearch
+    networks:
+        - mlops_network
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - elasticsearch
+    networks:
+      - mlops_network
+
+  api:
+    build: .
+    container_name: homecredit_api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - elasticsearch
+    environment:
+      - ELASTIC_HOST=http://elasticsearch:9200
+    networks:
+      - mlops_network
+
+networks:
+  mlops_network:
+    driver: bridge
