@@ -53,5 +53,9 @@ docker run -p 8000:8000 homecredit_scorer
 5. L’API est accessible via Swagger Localhost:8000/docs
 
 # Monitoring
-lancement docker-compose: docker-compose up -d
+lancement docker-compose: 
+docker-compose build --no-cache  # construction l'image d'un conteneur
+docker-compose up -d             # run de l'image ==> creation d'un conteneur
+docker ps                        # liste des conteneurs en cours
+docker-compose down              # remove image + conteneur
 

@@ -62,7 +62,7 @@ def predict_random_sample(model_key: str,client_index: int):
     latency = time.time() - start_time
 
     log_data = {
-    "timestamp": datetime.utcnow().isoformat(),
+    "timestamp": datetime.now().isoformat(),
     "model": model_key,
     "client_index": client_index,
     "prediction_probability": proba,
