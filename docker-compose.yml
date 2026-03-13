@@ -18,7 +18,8 @@ services:
       - mlops_network
 
   fluentd:
-    build: ./fluentd
+    #build: ./fluentd
+    image: fluent/fluentd-kubernetes-daemonset:v1.16-debian-elasticsearch8-1
     container_name: fluentd
     volumes:
           - ./fluentd/fluent.conf:/fluentd/etc/fluent.conf
