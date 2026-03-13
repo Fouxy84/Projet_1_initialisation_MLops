@@ -11,7 +11,8 @@ from datetime import datetime
 logger = logging.getLogger("mlops_api")
 logger.setLevel(logging.INFO)
 
-handler = logging.FileHandler("prediction_logs.json")
+#handler = logging.FileHandler("prediction_logs.json")
+handler = logging.FileHandler("/logs/prediction_logs.json")
 formatter = logging.Formatter('%(message)s')
 handler.setFormatter(formatter)
 

@@ -43,6 +43,8 @@ services:
       - ELASTIC_HOST=http://elasticsearch:9200
     networks:
       - mlops_network
+    volume :
+       - ./logs:/logs
 
 networks:
   mlops_network:
