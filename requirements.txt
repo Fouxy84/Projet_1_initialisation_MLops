@@ -14,3 +14,5 @@ gradio
 elasticsearch==8.12.0
 evidently==0.4.17
 pathlib
+onnxruntime
+onnx 

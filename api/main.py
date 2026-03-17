@@ -18,6 +18,10 @@ from evidently.metric_preset import DataDriftPreset
 import onnxruntime as rt
 import numpy as np
 
+import cProfile
+import pstats
+import io
+
 from api.load_mlflow_models import load_model_bundle
 from api.logger import log_prediction
 from elasticsearch import Elasticsearch 
@@ -44,9 +48,12 @@ es = Elasticsearch(ELASTIC_HOST)
 def predict_random_sample(model_key: str,client_index: int):
     profiler = cProfile.Profile()
     profiler.enable()
+
     start_time = time.time()
+
     bundle = MODELS[model_key]
     pool = bundle["inference_pool"]
+
     item = next((x for x in pool if x["Client_index"]==client_index),None)
     if item is None:
         raise HTTPException(
@@ -54,13 +61,13 @@ def predict_random_sample(model_key: str,client_index: int):
             detail=f"Client_index {client_index} not found in inference pool"
         )
 
-  
     sample = item["features"]
+
     input_df = pd.DataFrame([sample])
     input_df = input_df.reindex(columns=bundle["features"])
+    
     #input_df = bundle["imputer"].transform(input_df)
-
-    #pred = bundle["model"].predict_proba(input_df)[:, 1]
+    pred = bundle["model"].predict_proba(input_df)[:, 1]
     
     input_array = input_df.to_numpy().astype(np.float32)
     outputs = session.run(None, {input_name: input_array})
@@ -85,12 +92,15 @@ def predict_random_sample(model_key: str,client_index: int):
     }
 
     log_prediction(log_data)
+    
     profiler.disable()
-
+    
+    # affichage des 10 fonctions les plus coûteuses en temps d'exécution
     s = io.StringIO()
     ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
     ps.print_stats(10)
-
+    
+    print("===== PROFILING =====")
     print(s.getvalue())
     
     return {
@@ -99,6 +109,7 @@ def predict_random_sample(model_key: str,client_index: int):
         "prediction_probability": proba,
         "prediction": prediction,
         "threshold": bundle["threshold"],
+        "latency_seconds": latency,
     }
 
 
