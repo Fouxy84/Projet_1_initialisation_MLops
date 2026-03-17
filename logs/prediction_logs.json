@@ -139,3 +139,16 @@
 {"timestamp": "2026-03-17T20:47:58.630975", "model": "xgboost", "client_index": 580, "prediction_probability": 0.12277860939502716, "prediction": 1, "latency": 0.07966089248657227}
 {"timestamp": "2026-03-17T20:47:58.888932", "model": "xgboost", "client_index": 580, "prediction_probability": 0.12277860939502716, "prediction": 1, "latency": 0.07321906089782715}
 {"timestamp": "2026-03-17T20:47:59.132041", "model": "xgboost", "client_index": 580, "prediction_probability": 0.12277860939502716, "prediction": 1, "latency": 0.06876397132873535}
+{"timestamp": "2026-03-17T21:17:05.621375", "model": "xgboost", "client_index": 1615, "prediction_probability": 0.06723525375127792, "prediction": 0, "latency": 0.2193598747253418}
+{"timestamp": "2026-03-17T21:17:13.570601", "model": "xgboost", "client_index": 1615, "prediction_probability": 0.06723525375127792, "prediction": 0, "latency": 1.697819709777832}
+{"timestamp": "2026-03-17T21:17:14.320371", "model": "xgboost", "client_index": 1615, "prediction_probability": 0.06723525375127792, "prediction": 0, "latency": 0.06471133232116699}
+{"timestamp": "2026-03-17T21:17:14.593596", "model": "xgboost", "client_index": 1615, "prediction_probability": 0.06723525375127792, "prediction": 0, "latency": 0.06557297706604004}
+{"timestamp": "2026-03-17T21:17:14.903587", "model": "xgboost", "client_index": 1615, "prediction_probability": 0.06723525375127792, "prediction": 0, "latency": 0.05702567100524902}
+{"timestamp": "2026-03-17T21:17:15.435906", "model": "xgboost", "client_index": 1615, "prediction_probability": 0.06723525375127792, "prediction": 0, "latency": 0.06885290145874023}
+{"timestamp": "2026-03-17T21:17:50.802791", "model": "lightgbm", "client_index": 7444, "prediction_probability": 0.05568790269199335, "prediction": 0, "latency": 0.04046010971069336}
+{"timestamp": "2026-03-17T21:17:57.713064", "model": "lightgbm", "client_index": 7444, "prediction_probability": 0.05568790269199335, "prediction": 0, "latency": 0.020076274871826172}
+{"timestamp": "2026-03-17T21:17:58.021089", "model": "lightgbm", "client_index": 7444, "prediction_probability": 0.05568790269199335, "prediction": 0, "latency": 0.022274494171142578}
+{"timestamp": "2026-03-17T21:17:58.476249", "model": "lightgbm", "client_index": 7444, "prediction_probability": 0.05568790269199335, "prediction": 0, "latency": 0.018069028854370117}
+{"timestamp": "2026-03-17T21:17:58.656759", "model": "lightgbm", "client_index": 7444, "prediction_probability": 0.05568790269199335, "prediction": 0, "latency": 0.02290630340576172}
+{"timestamp": "2026-03-17T21:17:58.875993", "model": "lightgbm", "client_index": 7444, "prediction_probability": 0.05568790269199335, "prediction": 0, "latency": 0.017316579818725586}
+{"timestamp": "2026-03-17T21:17:59.124031", "model": "lightgbm", "client_index": 7444, "prediction_probability": 0.05568790269199335, "prediction": 0, "latency": 0.017293930053710938}
