@@ -16,8 +16,8 @@ import mlflow.sklearn
 
 import onnxmltools
 import onnx
-from skl2onnx.common.data_types import FloatTensorType
-
+#from skl2onnx.common.data_types import FloatTensorType
+from onnxmltools.convert.common.data_types import FloatTensorType
 from utilis import business_cost, find_best_threshold
 
 
@@ -36,7 +36,7 @@ X = train_df.drop(columns=["TARGET", "SK_ID_CURR"])
 y = train_df["TARGET"]
 
 # sample pour accélérer
-X = X.sample(n=100000, random_state=42)
+X = X.sample(n=150000, random_state=42)
 y = y.loc[X.index]
 
 print("Train shape:", X.shape)
@@ -66,8 +66,11 @@ X_train = pd.DataFrame(imputer.fit_transform(X_train), columns=X_train.columns)
 X_test = pd.DataFrame(imputer.transform(X_test), columns=X_test.columns)
 
 features = list(X_train.columns)
-
-
+onnx_feature_names = [f"f{i}" for i in range(len(features))]
+X_train_onnx = X_train.copy()
+X_train_onnx.columns = onnx_feature_names
+X_test_onnx = X_test.copy()
+X_test_onnx.columns = onnx_feature_names    
 # ============================================================
 # MLflow config (UNIQUE SOURCE OF TRUTH)
 # ============================================================
@@ -80,7 +83,7 @@ print("MLflow URI:", mlflow.get_tracking_uri())
 # ---- Save random inference pool (JSON serializable) - 100 clients from inference test
 with mlflow.start_run(run_name="inference_pool"):
     
-    sample_df = X_test.sample(n=500, random_state=452)
+    sample_df = X_test.sample(n=1000, random_state=452)
 
     inference_pool = [
         {
@@ -107,14 +110,15 @@ with mlflow.start_run(run_name="XGBoost_best_model"):
         random_state=42,
     )
 
-    model.fit(X_train, y_train)
-    
+    #model.fit(X_train, y_train)
+    model.fit(X_train_onnx, y_train)
+
     initial_type = [("input", FloatTensorType([None, len(features)]))]
     onnx_model = onnxmltools.convert_xgboost(model,initial_types=initial_type)
     onnx.save_model(onnx_model, "xgb_model.onnx")
     mlflow.log_artifact("xgb_model.onnx", artifact_path="xgb")
 
-    y_proba = model.predict_proba(X_test)[:, 1]
+    y_proba = model.predict_proba(X_test_onnx)[:, 1]
     threshold = find_best_threshold(y_test, y_proba)
 
     y_pred = (y_proba >= threshold).astype(int)
@@ -165,14 +169,14 @@ with mlflow.start_run(run_name="LightGBM_best_model"):
         random_state=42,
     )
 
-    model.fit(X_train, y_train)
-    
+    model.fit(X_train_onnx, y_train)
+   
     initial_type = [("input", FloatTensorType([None, len(features)]))]
     onnx_model = onnxmltools.convert_lightgbm(model,initial_types=initial_type)
     onnx.save_model(onnx_model, "lgb_model.onnx")
     mlflow.log_artifact("lgb_model.onnx", artifact_path="lgb")
 
-    y_proba = model.predict_proba(X_test)[:, 1]
+    y_proba = model.predict_proba(X_test_onnx)[:, 1]
     threshold = find_best_threshold(y_test, y_proba)
 
     y_pred = (y_proba >= threshold).astype(int)
