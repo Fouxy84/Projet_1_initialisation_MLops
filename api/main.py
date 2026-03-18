@@ -23,10 +23,10 @@ import cProfile
 import pstats
 import io
 
-#from api.load_mlflow_models import load_model_bundle
-#from api.logger import log_prediction
-from load_mlflow_models import load_model_bundle
-from logger import log_prediction
+from api.load_mlflow_models import load_model_bundle
+from api.logger import log_prediction
+#from load_mlflow_models import load_model_bundle
+#from logger import log_prediction
 from elasticsearch import Elasticsearch 
 
 LOG_FILE = "prediction_logs.json"
