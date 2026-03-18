@@ -13,8 +13,9 @@ from pathlib import Path
 import cProfile
 import pstats
 import io
-from evidently.report import Report
-from evidently.metric_preset import DataDriftPreset
+from evidently import Report
+from evidently.presets import DataDriftPreset
+#from evidently.metrics import DataDriftTable
 import onnxruntime as rt
 import numpy as np
 
@@ -22,8 +23,10 @@ import cProfile
 import pstats
 import io
 
-from api.load_mlflow_models import load_model_bundle
-from api.logger import log_prediction
+#from api.load_mlflow_models import load_model_bundle
+#from api.logger import log_prediction
+from load_mlflow_models import load_model_bundle
+from logger import log_prediction
 from elasticsearch import Elasticsearch 
 
 LOG_FILE = "prediction_logs.json"
@@ -204,7 +207,9 @@ def detect_drift():
     reference = df.iloc[:10]
     current = df.iloc[10:]
 
+
     report = Report(metrics=[DataDriftPreset()])
+
 
     report.run(
         reference_data=reference,
