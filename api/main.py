@@ -13,7 +13,7 @@ from pathlib import Path
 import cProfile
 import pstats
 import io
-from evidently import Report
+from evidently.report import Report
 from evidently.presets import DataDriftPreset
 #from evidently.metrics import DataDriftTable
 import onnxruntime as rt
@@ -187,52 +187,22 @@ def models_info():
     return info
 
 @app.get("/monitoring/drift")
-def detect_drift():
+def get_drift_metrics(limit: int = 10):
+    if not es.indices.exists(index="mlops_drift_metrics"):
+        return {"message": "No drift metrics available yet"}
 
-    if not es.indices.exists(index="mlops_predictions"):
-        return {"message": "No prediction logs yet"}
-     
     response = es.search(
-        index="mlops_predictions",
-        size=500
-    )
-
-    data = [hit["_source"] for hit in response["hits"]["hits"]]
-
-    df = pd.DataFrame(data)
-
-    if len(df) < 20:
-        return {"message": "Not enough data for drift detection"}
-    df = df.select_dtypes(include=["number"])
-    reference = df.iloc[:10]
-    current = df.iloc[10:]
-
-
-    report = Report(metrics=[DataDriftPreset()])
-
-
-    report.run(
-        reference_data=reference,
-        current_data=current
-    )
-
-    result = report.as_dict()
-
-    drift_score = result["metrics"][0]["result"]["dataset_drift"]
-    drift_share = result["metrics"][0]["result"]["share_of_drifted_columns"]
-
-    drift_doc = {
-        "timestamp": datetime.utcnow().isoformat(),
-        "dataset_drift": drift_score,
-        "drifted_features_share": drift_share
-    }
-
-    es.index(
         index="mlops_drift_metrics",
-        document=drift_doc
+        size=limit,
+        sort=[{"timestamp": {"order": "desc"}}]
     )
 
-    return drift_doc
+    results = [hit["_source"] for hit in response["hits"]["hits"]]
+
+    return {
+        "count": len(results),
+        "drift_metrics": results
+    }
 
 @app.post("/predict/XGBoost")
 def predict_xgboost_random(request:request_index):
