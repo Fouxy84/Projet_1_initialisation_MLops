@@ -13,8 +13,8 @@ from pathlib import Path
 import cProfile
 import pstats
 import io
-from evidently.report import Report
-from evidently.presets import DataDriftPreset
+#from evidently.report import Report
+#from evidently.presets import DataDriftPreset
 #from evidently.metrics import DataDriftTable
 import onnxruntime as rt
 import numpy as np
@@ -34,8 +34,11 @@ LOG_FILE = "prediction_logs.json"
 app = FastAPI(title="HomeCredit Scoring API")
 MODELS = {}
 
-session = rt.InferenceSession("model.onnx")
-input_name = session.get_inputs()[0].name
+sessions = {}
+input_names = {}
+
+sessions = {"xgboost": rt.InferenceSession("api/xgb_model.onnx"),"lightgbm": rt.InferenceSession("api/lgb_model.onnx"),}
+input_names = {k: v.get_inputs()[0].name for k, v in sessions.items()}
 
 # ======================================================
 # ELASTICSEARCH CONNECTION
@@ -65,22 +68,14 @@ def predict_random_sample(model_key: str,client_index: int):
         )
 
     sample = item["features"]
-
     input_df = pd.DataFrame([sample])
     input_df = input_df.reindex(columns=bundle["features"])
-    
-    #input_df = bundle["imputer"].transform(input_df)
-    pred = bundle["model"].predict_proba(input_df)[:, 1]
-    
     input_array = input_df.to_numpy().astype(np.float32)
+    
+    session = sessions[model_key]
+    input_name = input_names[model_key]
     outputs = session.run(None, {input_name: input_array})
     proba = float(outputs[1][0][1])
-
-    # Gestion robuste des sorties MLflow
-    if hasattr(pred, "__len__"):
-        proba = float(pred[0])
-    else:
-        proba = float(pred)
 
     prediction = int(proba >= bundle["threshold"])
     latency = time.time() - start_time
@@ -98,13 +93,13 @@ def predict_random_sample(model_key: str,client_index: int):
     
     profiler.disable()
     
-    # affichage des 10 fonctions les plus coûteuses en temps d'exécution
+    # affichage des  fonctions les plus coûteuses en temps d'exécution
     s = io.StringIO()
     ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
-    ps.print_stats(10)
-    
+    ps.print_stats(5)
+    profilt_out = s.getvalue()
     print("===== PROFILING =====")
-    print(s.getvalue())
+    print(profilt_out)
     
     return {
         "model": model_key,
@@ -113,6 +108,7 @@ def predict_random_sample(model_key: str,client_index: int):
         "prediction": prediction,
         "threshold": bundle["threshold"],
         "latency_seconds": latency,
+        "profiling": profilt_out
     }
 
 
@@ -187,13 +183,13 @@ def models_info():
     return info
 
 @app.get("/monitoring/drift")
-def get_drift_metrics(limit: int = 10):
+def get_drift_metrics():
     if not es.indices.exists(index="mlops_drift_metrics"):
         return {"message": "No drift metrics available yet"}
 
     response = es.search(
         index="mlops_drift_metrics",
-        size=limit,
+        size=10,
         sort=[{"timestamp": {"order": "desc"}}]
     )
 
