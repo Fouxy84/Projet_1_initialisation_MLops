@@ -86,7 +86,8 @@ def predict_random_sample(model_key: str,client_index: int):
     "client_index": client_index,
     "prediction_probability": proba,
     "prediction": prediction,
-    "latency": latency
+    "latency": latency,
+    "features": sample
     }
 
     log_prediction(log_data)

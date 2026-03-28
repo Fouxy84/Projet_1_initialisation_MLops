@@ -3,39 +3,44 @@
 ###############################################################
 # Importations
 ###############################################################
+from matplotlib.pylab import sample
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from elasticsearch import Elasticsearch
 es = Elasticsearch("http://localhost:9200")
 
-from evidently.report import Report
+from evidently import Report
 from evidently.presets import DataDriftPreset
 import time
+from pathlib import Path
 
 ###############################################################
 # load data, cleaning & visualization
 ###############################################################
 #load data
-reference = pd.read_csv("reference_data.csv")
-current_raw = pd.read_json("prediction_logs.json", lines=True)
-print("Reference shape:", reference.shape)
+reference_path = Path(r"C:\Users\coach\Desktop\datascientest\OpenClassrooms\Projects_MLops\Projet_1_initialisation_MLops\data\proceed\homecredit_features.csv")
+current_path = Path(r"C:\Users\coach\Desktop\datascientest\OpenClassrooms\Projects_MLops\Projet_MLops_1\Projet_1_initialisation_MLops\logs\prediction_logs.json")
+reference_raw = pd.read_csv(reference_path)
+current_raw = pd.read_json(current_path, lines=True)
+print("Reference shape:", reference_raw.shape)
 print("Current shape:", current_raw.shape)
 #clean data
-reference = reference.select_dtypes(include=["number"])
-current = current_raw.select_dtypes(include=["number"])
-#visualize
-for col in reference.columns:
-    if col in current.columns:
-        plt.figure()
-        sns.kdeplot(reference[col], label="Reference")
-        sns.kdeplot(current[col], label="Current")
-        plt.title(f"Distribution comparison: {col}")
-        plt.legend()
-        plt.show()
+current_log = pd.json_normalize(current_raw["features"])
+reference = reference_raw.select_dtypes(include=["number"])
+current = current_log.select_dtypes(include=["number"])
+print("Reference 2 shape:", reference.shape)
+print("Current 2 shape:", current.shape)
+
+common_cols = list(set(reference.columns).intersection(set(current.columns)))
+reference = reference[common_cols]
+current = current[common_cols]
+print("Final aligned shape:")
+print("Reference:", reference.shape)
+print("Current:", current.shape)
 
 current_raw["timestamp"] = pd.to_datetime(current_raw["timestamp"])
-current_raw.set_index("timestamp")["prediction_probability"].plot(title="Prediction over time")
+current_raw.set_index("timestamp")["prediction_probability"].plot(title="Prediction over time",figsize=(10,5))
 plt.show()
 
 ###############################################################
