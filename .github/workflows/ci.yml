@@ -64,42 +64,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Clean large files (HF limit fix)
-        run: |
-          rm -f notebook/drift_report.html
-          rm -f inference_pool.json
-
-      - name: Update .gitignore
-        run: |
-          echo "notebook/*.html" >> .gitignore
-          echo "inference_pool.json" >> .gitignore
-
-      - name: Commit cleanup
-        run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add .gitignore
-          git rm --cached notebook/drift_report.html || true
-          git rm --cached inference_pool.json || true
-          git commit -m "CI: remove large files" || echo "Nothing to commit"
-
       - name: Push to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          rm -rf .git
-          git init
-          
-          git congig user.name "github-actions"
-          git config user.email "actions@github.com"
-          
-          rm -f notebook/drift_report.html
-          rm -f inference_pool.json
-          echo "notebook/*.html" >> .gitignore
-          echo "inference_pool.json" >> .gitignore
-
-          git add .
-          git commit -m "CI: deploy to Hugging Face Space"
 
           git remote add space https://Fouxy84:$HF_TOKEN@huggingface.co/spaces/Fouxy84/MLops_2
           git push space main --force
