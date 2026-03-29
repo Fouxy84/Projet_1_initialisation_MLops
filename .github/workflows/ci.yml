@@ -40,21 +40,6 @@ jobs:
       run: |
         docker build -t homecredit_api .
 
-
-  #deploy:
-    #runs-on: ubuntu-latest
-    #needs: build-docker
-    #if: github.ref == 'refs/heads/main'
-
-    #steps:
-
-     # - name: Push to Hugging Face Space
-     #   env:
-     #    HF_TOKEN: ${{ secrets.HF_TOKEN }}
-     #   run: |
-      #    git remote add space https://Fouxy84:$HF_TOKEN@huggingface.co/spaces/Fouxy84/MLops_2
-       #   git push --force space main
-
   deploy:
     runs-on: ubuntu-latest
     needs: build-docker
@@ -63,6 +48,22 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      
+      - name: Prepare clean repo for Hugging Face
+        run: |
+          # remove git history
+          rm -rf .git
+          git init
+          git branch -M main
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          rm -rf notebook/
+          rm -f inference_pool.json
+          echo "notebook/" >> .gitignore
+          echo "*.html" >> .gitignore
+          echo "*.json" >> .gitignore
+          git add .
+          git commit -m "Clean deploy to HF"
 
       - name: Push to Hugging Face Space
         env:
