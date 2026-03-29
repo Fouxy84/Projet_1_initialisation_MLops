@@ -58,3 +58,12 @@ models/
 *.joblib
 mlruns/
 api/mlruns/
+
+api/inference_pool.json
+notebook/drift_report.html
+logs/
+*.html
+*.json
+
+echo "api/inference_pool.json" >> .gitignore
+echo "notebook/drift_report.html" >> .gitignore
