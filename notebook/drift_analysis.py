@@ -2,9 +2,13 @@
 
 ###############################################################
 # Importations
+print("1/ Importing libraries...")
 ###############################################################
+import re
+
 from matplotlib.pylab import sample
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from elasticsearch import Elasticsearch
@@ -14,9 +18,11 @@ from evidently import Report
 from evidently.presets import DataDriftPreset
 import time
 from pathlib import Path
+import json
 
 ###############################################################
 # load data, cleaning & visualization
+print("2/ Loading and cleaning data...")
 ###############################################################
 #load data
 reference_path = Path(r"C:\Users\coach\Desktop\datascientest\OpenClassrooms\Projects_MLops\Projet_1_initialisation_MLops\data\proceed\homecredit_features.csv")
@@ -29,8 +35,22 @@ print("Current shape:", current_raw.shape)
 current_log = pd.json_normalize(current_raw["features"])
 reference = reference_raw.select_dtypes(include=["number"])
 current = current_log.select_dtypes(include=["number"])
+
+reference = reference.replace([np.inf, -np.inf], np.nan).dropna(axis=1, how="all")
+current = current.replace([np.inf, -np.inf], np.nan).dropna(axis=1, how="all")
+reference = reference.fillna(0)
+current = current.fillna(0)
+
+def remove_constant(df):
+    return df.loc[:, df.nunique() > 1]
+reference = remove_constant(reference)
+current = remove_constant(current)
+
 print("Reference 2 shape:", reference.shape)
 print("Current 2 shape:", current.shape)
+print("NaN in reference:", reference.isna().sum().sum())
+print("NaN in current:", current.isna().sum().sum())
+print("Constant cols:", (reference.nunique() <= 1).sum())
 
 common_cols = list(set(reference.columns).intersection(set(current.columns)))
 reference = reference[common_cols]
@@ -41,24 +61,37 @@ print("Current:", current.shape)
 
 current_raw["timestamp"] = pd.to_datetime(current_raw["timestamp"])
 current_raw.set_index("timestamp")["prediction_probability"].plot(title="Prediction over time",figsize=(10,5))
-plt.show()
+plt.show(block=False)
+plt.tight_layout()
+plt.savefig("prediction_over_time.png")
+plt.pause(30)   # Afficher le graphique pendant 30 secondes
+plt.close()
 
 ###############################################################
 # Drift & monitoring
+print("3/ Performing drift analysis...")
 ###############################################################
 # Drift detection
-report = Report(metrics=[DataDriftPreset()])
-report.run(reference_data=reference,current_data=current)
-report.show()
-# Extract drift results
-result = report.as_dict()
-drift_score = result["metrics"][0]["result"]["dataset_drift"]
-drift_share = result["metrics"][0]["result"]["share_of_drifted_columns"]
+report = Report([DataDriftPreset()])
+#report = Report([DataDriftPreset(method="psi")],include_tests="True")
+drift_eval = report.run(reference_data=reference,current_data=current)
+drift_eval.save_html("drift_report.html")
+drift_eval.save_json("drift_report.json")
+print(drift_eval)
+
+result = drift_eval.dict()
+#drift_score = result["metrics"][0]["result"]["dataset_drift"]
+#drift_share = result["metrics"][0]["result"]["share_of_drifted_columns"]
+
+
+drift_share = result["metrics"][0]["value"]["share"]
+drift_score = drift_share > 0.5
+
 print("Dataset drift:", drift_score)
 print("Drifted features (%):", drift_share)
-
 ###############################################################
 # elasticsearch saving
+print("4/ Saving results to Elasticsearch...")
 ###############################################################
 doc = {"timestamp": time.time(),"dataset_drift": drift_score,"drifted_features_share": drift_share}
 
@@ -68,15 +101,11 @@ es.index(index="mlops_drift_metrics",document=doc)
 # drift analysis
 ###############################################################
 '''
-L’analyse montre que le dataset_drift est de [True/False] avec une proportion de variables dérivées de [X%].
-Certaines variables présentent des différences de distribution entre les données de référence et les données de production.
-Ces écarts peuvent être causés par :
-- une évolution des comportements utilisateurs,
-- une modification des données d’entrée,
-- ou une dérive dans la collecte des données.
-## Impact
-Cette dérive peut entraîner une baisse de performance du modèle en production.
-## Recommandations
-- Mettre en place un monitoring continu
-- Déclencher un réentraînement du modèle si nécessaire
+### Analyse du drift des données
+
+L’analyse met en évidence un data drift de l'ordre de 89% des variables présentes entre les données de référence (homecredit_features.csv)
+ et les données de production (logs/prediction_logs.json).
+ l'ecart est signficatif car les modèles ont ete entrainés sur 49% des données de référence (150k clients sur 307k)
+ ceci pour une question de temps de calcul et de ressources, mais cela a pu introduire un biais dans les données d'entrainement.
 '''
+print("5/ Drift analysis completed.")

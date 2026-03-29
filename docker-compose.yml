@@ -48,6 +48,7 @@ services:
       - elasticsearch
     environment:
       - ELASTIC_HOST=http://elasticsearch:9200
+      - LOG_DIR=/logs
     networks:
       - mlops_network
     volumes :

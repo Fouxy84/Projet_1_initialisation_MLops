@@ -69,13 +69,22 @@ def predict_random_sample(model_key: str,client_index: int):
 
     sample = item["features"]
     input_df = pd.DataFrame([sample])
+    input_df = input_df.fillna(0)
     input_df = input_df.reindex(columns=bundle["features"])
-    input_array = input_df.to_numpy().astype(np.float32)
-    
     session = sessions[model_key]
     input_name = input_names[model_key]
-    outputs = session.run(None, {input_name: input_array})
-    proba = float(outputs[1][0][1])
+
+    if input_df.shape[1] == 0:
+        pred = bundle["model"].predict_proba(input_df)[:, 1]
+        proba = float(pred[0])
+    else:
+        input_array = input_df.to_numpy().astype(np.float32)
+        outputs = session.run(None, {input_name: input_array})
+        proba = float(outputs[1][0][1])
+
+    #input_array = input_df.to_numpy().astype(np.float32)
+    #outputs = session.run(None, {input_name: input_array})
+    #proba = float(outputs[1][0][1])
 
     prediction = int(proba >= bundle["threshold"])
     latency = time.time() - start_time
