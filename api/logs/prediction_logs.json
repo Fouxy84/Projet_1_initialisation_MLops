@@ -1,0 +1,6 @@
+{"test": "ok", "value": 123}
+{"timestamp": "2026-03-28T23:31:30.451540", "model": "xgboost", "client_index": 4242, "prediction_probability": 0.85, "prediction": 1, "latency": 0.1, "features": {}}
+{"test": "ok", "value": 123}
+{"test": "ok", "value": 123}
+{"test": "ok", "value": 123}
+{"timestamp": "2026-03-28T23:16:45.776073", "model": "xgboost", "client_index": 4242, "prediction_probability": 0.85, "prediction": 1, "latency": 0.1, "features": {}}

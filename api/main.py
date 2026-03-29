@@ -91,6 +91,7 @@ def predict_random_sample(model_key: str,client_index: int):
     }
 
     log_prediction(log_data)
+    print("LOGGING:", log_data)
     
     profiler.disable()
     
