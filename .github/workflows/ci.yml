@@ -49,26 +49,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - name: Prepare clean repo for Hugging Face
-        run: |
-          # remove git history
-          rm -rf .git
-          git init
-          git branch -M main
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          rm -rf notebook/
-          rm -f inference_pool.json
-          
-          rm -f *.onnx
-          rm -f api/*.onnx
-          echo "notebook/" >> .gitignore
-          echo "*.html" >> .gitignore
-          echo "*.json" >> .gitignore
-          echo "*.onnx" >> .gitignore
-          git add .
-          git commit -m "Clean deploy to HF"
-
       - name: Push to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
