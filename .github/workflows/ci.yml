@@ -59,9 +59,13 @@ jobs:
           git config user.email "actions@github.com"
           rm -rf notebook/
           rm -f inference_pool.json
+          
+          rm -f *.onnx
+          rm -f api/*.onnx
           echo "notebook/" >> .gitignore
           echo "*.html" >> .gitignore
           echo "*.json" >> .gitignore
+          echo "*.onnx" >> .gitignore
           git add .
           git commit -m "Clean deploy to HF"
 
