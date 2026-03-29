@@ -41,16 +41,51 @@ jobs:
         docker build -t homecredit_api .
 
 
+  #deploy:
+    #runs-on: ubuntu-latest
+    #needs: build-docker
+    #if: github.ref == 'refs/heads/main'
+
+    #steps:
+
+     # - name: Push to Hugging Face Space
+     #   env:
+     #    HF_TOKEN: ${{ secrets.HF_TOKEN }}
+     #   run: |
+      #    git remote add space https://Fouxy84:$HF_TOKEN@huggingface.co/spaces/Fouxy84/MLops_2
+       #   git push --force space main
+
   deploy:
     runs-on: ubuntu-latest
     needs: build-docker
     if: github.ref == 'refs/heads/main'
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Clean large files (HF limit fix)
+        run: |
+          rm -f notebook/drift_report.html
+          rm -f inference_pool.json
+
+      - name: Update .gitignore
+        run: |
+          echo "notebook/*.html" >> .gitignore
+          echo "inference_pool.json" >> .gitignore
+
+      - name: Commit cleanup
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .gitignore
+          git rm --cached notebook/drift_report.html || true
+          git rm --cached inference_pool.json || true
+          git commit -m "CI: remove large files" || echo "Nothing to commit"
 
       - name: Push to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git remote add space https://Fouxy84:$HF_TOKEN@huggingface.co/spaces/Fouxy84/MLops_2
-          git push --force space main
+          git remote add space https://Fouxy84:$HF_TOKEN@huggingface.co/spaces/Fouxy84/MLops_2 || true
+          git push space main --force
