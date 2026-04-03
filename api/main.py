@@ -1,8 +1,9 @@
 # api/main.py
 
 import os
+from flask import logging
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, logger
 from pydantic import BaseModel
 import uvicorn
 import mlflow
@@ -18,10 +19,11 @@ import io
 #from evidently.metrics import DataDriftTable
 import onnxruntime as rt
 import numpy as np
-
+from pathlib import Path
 import cProfile
 import pstats
 import io
+import logging
 
 from api.load_mlflow_models import load_model_bundle
 from api.logger import log_prediction
@@ -36,8 +38,22 @@ MODELS = {}
 
 sessions = {}
 input_names = {}
+BASE_DIR = Path(__file__).resolve().parent.parent
+ARTIFACTS_DIR = BASE_DIR / "artifacts"
+sessions = {
+    "xgboost": rt.InferenceSession(str(ARTIFACTS_DIR / "XGBoost.onnx")),
+    "lightgbm": rt.InferenceSession(str(ARTIFACTS_DIR / "LightGBM.onnx")),
+}
 
-sessions = {"xgboost": rt.InferenceSession("api/xgb_model.onnx"),"lightgbm": rt.InferenceSession("api/lgb_model.onnx"),}
+for name, path in {
+    "xgboost": ARTIFACTS_DIR / "XGBoost.onnx",
+    "lightgbm": ARTIFACTS_DIR / "LightGBM.onnx",
+}.items():
+    if not path.exists():
+        raise FileNotFoundError(f"{name} model not found at {path}")
+    print(f"Loaded {name} from {path}")
+
+#sessions = {"xgboost": rt.InferenceSession("api/xgb_model.onnx"),"lightgbm": rt.InferenceSession("api/lgb_model.onnx"),}
 input_names = {k: v.get_inputs()[0].name for k, v in sessions.items()}
 
 # ======================================================
@@ -112,6 +128,9 @@ def predict_random_sample(model_key: str,client_index: int):
     print("===== PROFILING =====")
     print(profilt_out)
     
+    logger = logging.getLogger("mlops_api")
+    logger.info(profilt_out)
+
     return {
         "model": model_key,
         "client_index": client_index,
@@ -119,8 +138,7 @@ def predict_random_sample(model_key: str,client_index: int):
         "prediction": prediction,
         "threshold": bundle["threshold"],
         "latency_seconds": latency,
-        "profiling": profilt_out,
-        "type": type(profilt_out)
+        "profiling": profilt_out
     }
 
 
