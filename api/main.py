@@ -5,6 +5,7 @@ from flask import logging
 import pandas as pd
 from fastapi import FastAPI, HTTPException, logger
 from pydantic import BaseModel
+from scipy import stats
 import uvicorn
 import mlflow
 from datetime import datetime
@@ -120,16 +121,41 @@ def predict_random_sample(model_key: str,client_index: int):
     
     profiler.disable()
     
-    # affichage des  fonctions les plus coûteuses en temps d'exécution
+    # --- PROFILING ---
     s = io.StringIO()
     ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
-    ps.print_stats(100)
+    ps.print_stats(100) #afiichage 100 focntions les plus couteuses en temps cumulés
     profilt_out = s.getvalue()
+
     print("===== PROFILING =====")
     print(profilt_out)
-    
+
+    # --- STRUCTURED LOGGING ---
+    stats = pstats.Stats(profiler)
+    stats.sort_stats("cumulative")
+
+    top_functions = []
+
+    for func, stat in list(stats.stats.items())[:10]:
+        filename, line, name = func
+        cc, nc, tt, ct, callers = stat
+
+        top_functions.append({
+            "function": name,
+            "file": filename.split("/")[-1],
+            "cumulative_time": round(ct, 6),
+            "total_calls": nc
+        })
+
     logger = logging.getLogger("mlops_api")
-    logger.info(profilt_out)
+
+    logger.info(json.dumps({
+        "type": "profiling",
+        "model": model_key,
+        "client_index": client_index,
+        "latency": round(latency, 6),
+        "top_functions": top_functions
+    }))
 
     return {
         "model": model_key,
