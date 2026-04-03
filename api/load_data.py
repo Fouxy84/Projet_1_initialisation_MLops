@@ -24,7 +24,7 @@ from utilis import business_cost, find_best_threshold
 # ============================================================
 # Paths & data
 # ============================================================
-BASE_DIR = Path(r"C:/Users/coach/Desktop/datascientest/OpenClassrooms/Projects_MLops/Projet_1_initialisation_MLops")
+BASE_DIR = Path(r"C:/Users/coach/Desktop/datascientest/OpenClassrooms/Projects_MLops/PROJET_2/Projet_1_initialisation_MLops")
 DATA_PATH = BASE_DIR / "data" / "proceed" / "homecredit_features.csv"
 
 df = pd.read_csv(DATA_PATH, low_memory=False)
@@ -36,8 +36,8 @@ X = train_df.drop(columns=["TARGET", "SK_ID_CURR"])
 y = train_df["TARGET"]
 
 # sample pour accélérer
-X = X.sample(n=150000, random_state=42)
-y = y.loc[X.index]
+# = X.sample(n=200000, random_state=4)
+#y = y.loc[X.index]
 
 print("Train shape:", X.shape)
 

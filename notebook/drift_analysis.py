@@ -5,7 +5,7 @@
 print("1/ Importing libraries...")
 ###############################################################
 import re
-
+import os
 from matplotlib.pylab import sample
 import pandas as pd
 import numpy as np
@@ -25,8 +25,8 @@ import json
 print("2/ Loading and cleaning data...")
 ###############################################################
 #load data
-reference_path = Path(r"C:\Users\coach\Desktop\datascientest\OpenClassrooms\Projects_MLops\Projet_1_initialisation_MLops\data\proceed\homecredit_features.csv")
-current_path = Path(r"C:\Users\coach\Desktop\datascientest\OpenClassrooms\Projects_MLops\Projet_MLops_1\Projet_1_initialisation_MLops\logs\prediction_logs.json")
+reference_path = Path(r"C:\Users\coach\Desktop\datascientest\OpenClassrooms\Projects_MLops\PROJET_2\Projet_1_initialisation_MLops\data\proceed\homecredit_features.csv")
+current_path = Path(r"C:\Users\coach\Desktop\datascientest\OpenClassrooms\Projects_MLops\PROJET_2\Projet_1_initialisation_MLops\logs\prediction_logs.json")
 reference_raw = pd.read_csv(reference_path)
 current_raw = pd.read_json(current_path, lines=True)
 print("Reference shape:", reference_raw.shape)
@@ -72,11 +72,14 @@ plt.close()
 print("3/ Performing drift analysis...")
 ###############################################################
 # Drift detection
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 report = Report([DataDriftPreset()])
 #report = Report([DataDriftPreset(method="psi")],include_tests="True")
 drift_eval = report.run(reference_data=reference,current_data=current)
-drift_eval.save_html("drift_report.html")
-drift_eval.save_json("drift_report.json")
+drift_eval.save_html(os.path.join(BASE_DIR, "drift_report.html"))
+drift_eval.save_json(os.path.join(BASE_DIR, "drift_report.json"))
+#drift_eval.save_html("drift_report.html")
+#drift_eval.save_json("drift_report.json")
 print(drift_eval)
 
 result = drift_eval.dict()
