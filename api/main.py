@@ -107,7 +107,7 @@ def predict_random_sample(model_key: str,client_index: int):
     # affichage des  fonctions les plus coûteuses en temps d'exécution
     s = io.StringIO()
     ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
-    ps.print_stats(5)
+    ps.print_stats(100)
     profilt_out = s.getvalue()
     print("===== PROFILING =====")
     print(profilt_out)
@@ -119,7 +119,8 @@ def predict_random_sample(model_key: str,client_index: int):
         "prediction": prediction,
         "threshold": bundle["threshold"],
         "latency_seconds": latency,
-        "profiling": profilt_out
+        "profiling": profilt_out,
+        "type": type(profilt_out)
     }
 
 
