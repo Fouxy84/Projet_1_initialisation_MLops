@@ -44,7 +44,7 @@ def load_model_bundle(
     
     # Adjust artifact_uri for container environment
     artifact_uri = run.info.artifact_uri
-    host_path = "file:///C:/Users/coach/Desktop/datascientest/OpenClassrooms/Projects_MLops/Projet_MLops_1/Projet_1_initialisation_MLops/"
+    host_path = "file:///C:/Users/coach/Desktop/datascientest/OpenClassrooms/Projects_MLops/PROJET_2/Projet_1_initialisation_MLops/"
     if artifact_uri.startswith(host_path):
         artifact_uri = artifact_uri.replace(host_path, "file:/app/")
     
@@ -58,7 +58,7 @@ def load_model_bundle(
         )
 
     # ---- Load model (sklearn model)
-    model = joblib.load(flavor_dir / "model.joblib")
+    #model = joblib.load(flavor_dir / "model.joblib")
 
     # ---- Load inference artifacts
     imputer = joblib.load(flavor_dir / "imputer.joblib")
@@ -76,7 +76,7 @@ def load_model_bundle(
         inference_pool = []
 
     return {
-        "model": model,
+        #"model": model,
         "imputer": imputer,
         "features": features,
         "threshold": threshold,

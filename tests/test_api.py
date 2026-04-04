@@ -20,7 +20,8 @@ fake_bundle = {
     ],
     "model_name": "fake_model",
     "model_version": 1,
-    "run_id": "test_run"
+    "run_id": "test_run",
+    "mock": True
 }
 
 

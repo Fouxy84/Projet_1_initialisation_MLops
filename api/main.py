@@ -1,7 +1,6 @@
 # api/main.py
 
 import os
-from flask import logging
 import pandas as pd
 from fastapi import FastAPI, HTTPException, logger
 from pydantic import BaseModel
@@ -91,9 +90,8 @@ def predict_random_sample(model_key: str,client_index: int):
     session = sessions[model_key]
     input_name = input_names[model_key]
 
-    if input_df.shape[1] == 0:
-        pred = bundle["model"].predict_proba(input_df)[:, 1]
-        proba = float(pred[0])
+    if bundle.get("mock", False):
+        proba = 0.8
     else:
         input_array = input_df.to_numpy().astype(np.float32)
         outputs = session.run(None, {input_name: input_array})
@@ -107,6 +105,7 @@ def predict_random_sample(model_key: str,client_index: int):
     latency = time.time() - start_time
 
     log_data = {
+    "type": "prediction",
     "timestamp": datetime.now().isoformat(),
     "model": model_key,
     "client_index": client_index,
@@ -129,33 +128,36 @@ def predict_random_sample(model_key: str,client_index: int):
 
     print("===== PROFILING =====")
     print(profilt_out)
-
-    # --- STRUCTURED LOGGING ---
+    # --- PROFILING STRUCTURÉ ---
     stats = pstats.Stats(profiler)
     stats.sort_stats("cumulative")
 
-    top_functions = []
+    top_functions = sorted(
+        [
+            {
+                "function": func[2],
+                "cumulative_time": round(stat[3], 6),
+            }
+            for func, stat in stats.stats.items()
+        ],
+        key=lambda x: x["cumulative_time"],
+        reverse=True
+    )[:3]
 
-    for func, stat in list(stats.stats.items())[:10]:
-        filename, line, name = func
-        cc, nc, tt, ct, callers = stat
-
-        top_functions.append({
-            "function": name,
-            "file": filename.split("/")[-1],
-            "cumulative_time": round(ct, 6),
-            "total_calls": nc
-        })
-
-    logger = logging.getLogger("mlops_api")
-
-    logger.info(json.dumps({
+    profiling_data = {
         "type": "profiling",
+        "timestamp": datetime.now().isoformat(),
         "model": model_key,
         "client_index": client_index,
         "latency": round(latency, 6),
-        "top_functions": top_functions
-    }))
+    }
+
+    # 🔥 flatten pour Grafana
+    for i, f in enumerate(top_functions):
+        profiling_data[f"func_{i}_name"] = f["function"]
+        profiling_data[f"func_{i}_time"] = f["cumulative_time"]
+
+    log_prediction(profiling_data)
 
     return {
         "model": model_key,

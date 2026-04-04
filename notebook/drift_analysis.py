@@ -16,7 +16,7 @@ es = Elasticsearch("http://localhost:9200")
 
 from evidently import Report
 from evidently.presets import DataDriftPreset
-import time
+from datetime import datetime
 from pathlib import Path
 import json
 
@@ -96,7 +96,7 @@ print("Drifted features (%):", drift_share)
 # elasticsearch saving
 print("4/ Saving results to Elasticsearch...")
 ###############################################################
-doc = {"timestamp": time.time(),"dataset_drift": drift_score,"drifted_features_share": drift_share}
+doc = {"timestamp": datetime.now(),"dataset_drift": drift_score,"drifted_features_share": drift_share}
 
 es.index(index="mlops_drift_metrics",document=doc)
 
