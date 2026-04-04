@@ -158,7 +158,7 @@ def predict_random_sample(model_key: str,client_index: int):
         profiling_data[f"func_{i}_time"] = f["cumulative_time"]
 
     log_prediction(profiling_data)
-
+    print("PROFILING DATA SENT:", profiling_data)
     return {
         "model": model_key,
         "client_index": client_index,

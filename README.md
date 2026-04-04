@@ -9,7 +9,7 @@ app_file: app.py
 pinned: false
 ---
 
-# ML_ops_OC_1
+# ML_ops_OC_2
 
 # Home Credit MLOps Project
 
@@ -17,10 +17,11 @@ pinned: false
 Build an end-to-end MLOps pipeline to predict loan default risk.
 
 ## Structure
-- data/: datasets (ignored)
-- src/: preprocessing and training code
-- notebooks/: experiments
-- mlruns/: MLflow tracking
+-api/ # FastAPI application (inference) 
+- artifacts/ # exported models (ONNX, preprocessing) 
+- src/ # training pipeline 
+- notebooks/ # experiments & EDA logs/ # prediction logs 
+- fluentd/ # logging configuration
 
 ## Stack
 - Python
@@ -28,11 +29,17 @@ Build an end-to-end MLOps pipeline to predict loan default risk.
 - XGBoost
 - LightGBM
 - MLflow
+- ONNX Runtime
+- FastAPI
+- Docker / Docker Compose
+- Elasticsearch
+- Fluentd
+- Grafana
 
 
 ## api & docker
 #MLFLOW
-cd 'C:\Users\coach\Desktop\datascientest\OpenClassrooms\Projects_MLops\Projet_1_initialisation_MLops\notebook\mlruns' 
+cd 'C:\Users\coach\Desktop\datascientest\OpenClassrooms\PROJET_2\Projet_1_initialisation_MLops\notebook\mlruns' 
 mlflow ui
 
 #API
@@ -49,7 +56,7 @@ docker run -p 8000:8000 homecredit_scorer
 3. Si les tests passent :
    - build de l'image Docker
    - lancement du conteneur pour test API
-4. Déploiement automatique vers Hugging Face Spaces MLops_2
+4. Déploiement automatique vers Hugging Face Spaces MLops_2 https://huggingface.co/spaces/Fouxy84/MLops_2
 5. L’API est accessible via Swagger Localhost:8000/docs
 
 # Monitoring
