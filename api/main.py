@@ -27,6 +27,7 @@ import logging
 
 from api.load_mlflow_models import load_model_bundle
 from api.logger import log_prediction
+from api.logger import log_profiling
 #from load_mlflow_models import load_model_bundle
 #from logger import log_prediction
 from elasticsearch import Elasticsearch 
@@ -97,10 +98,6 @@ def predict_random_sample(model_key: str,client_index: int):
         outputs = session.run(None, {input_name: input_array})
         proba = float(outputs[1][0][1])
 
-    #input_array = input_df.to_numpy().astype(np.float32)
-    #outputs = session.run(None, {input_name: input_array})
-    #proba = float(outputs[1][0][1])
-
     prediction = int(proba >= bundle["threshold"])
     latency = time.time() - start_time
 
@@ -114,35 +111,18 @@ def predict_random_sample(model_key: str,client_index: int):
     "latency": latency,
     "features": sample
     }
-
     log_prediction(log_data)
-    print("LOGGING:", log_data)
-    
-    profiler.disable()
     
     # --- PROFILING ---
+    profiler.disable()
     s = io.StringIO()
     ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
-    ps.print_stats(100) #afiichage 100 focntions les plus couteuses en temps cumulés
+    ps.print_stats(200) #affichage 200 focntions les plus couteuses en temps cumulés
     profilt_out = s.getvalue()
-
-    print("===== PROFILING =====")
-    print(profilt_out)
-    # --- PROFILING STRUCTURÉ ---
     stats = pstats.Stats(profiler)
     stats.sort_stats("cumulative")
-
-    top_functions = sorted(
-        [
-            {
-                "function": func[2],
-                "cumulative_time": round(stat[3], 6),
-            }
-            for func, stat in stats.stats.items()
-        ],
-        key=lambda x: x["cumulative_time"],
-        reverse=True
-    )[:3]
+    top_functions = sorted([{"function": func[2],"cumulative_time": round(stat[3], 6)} for func, stat in stats.stats.items()],
+        key=lambda x: x["cumulative_time"],reverse=True)[:10]
 
     profiling_data = {
         "type": "profiling",
@@ -152,13 +132,12 @@ def predict_random_sample(model_key: str,client_index: int):
         "latency": round(latency, 6),
     }
 
-    # 🔥 flatten pour Grafana
     for i, f in enumerate(top_functions):
         profiling_data[f"func_{i}_name"] = f["function"]
         profiling_data[f"func_{i}_time"] = f["cumulative_time"]
 
-    log_prediction(profiling_data)
-    print("PROFILING DATA SENT:", profiling_data)
+    log_profiling(profiling_data)
+
     return {
         "model": model_key,
         "client_index": client_index,
@@ -166,7 +145,7 @@ def predict_random_sample(model_key: str,client_index: int):
         "prediction": prediction,
         "threshold": bundle["threshold"],
         "latency_seconds": latency,
-        "profiling": profilt_out
+       # "profiling": profilt_out
     }
 
 
