@@ -4,7 +4,7 @@ import json
 import pandas as pd
 from datetime import datetime
 
-LOG_DIR = os.getenv("LOG_DIR", "/logs")
+LOG_DIR = os.getenv("LOG_DIR", "./logs")
 os.makedirs(LOG_DIR, exist_ok=True)
 
 PRED_LOG_FILE = os.path.join(LOG_DIR, "prediction_logs.json")
