@@ -15,6 +15,7 @@ pinned: false
 Build an end-to-end MLOps pipeline to predict loan default risk for Home Credit. 
 This project provides both an interactive web dashboard (Gradio) and a scalable REST API (FastAPI) for scoring inference.
 
+
 ## Structure
 - `app.py`: Interactive Gradio dashboard deployed on Hugging Face Spaces.
 - `api/`: FastAPI backend application for ML scoring, inference, logging, and profiling.

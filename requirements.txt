@@ -12,5 +12,5 @@ elasticsearch==8.12.0
 pathlib
 onnxruntime
 onnx 
-pyaudioop
+pyaudioop; python_version >= "3.13"
 #evidently==0.4.19
