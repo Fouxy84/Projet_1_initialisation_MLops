@@ -24,6 +24,14 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           
+          # Force remove *.onnx from the local .gitignore so we CAN push them
+          sed -i '/\*.onnx/d' .gitignore
+          
+          # Initialize Git LFS so Hugging Face accepts the models
+          git lfs install
+          git lfs track "*.onnx"
+          git add .gitattributes
+          
           # Remove files that are too large or unnecessary for Hugging Face Space
           rm -rf notebook/
           rm -rf logs/
@@ -35,7 +43,7 @@ jobs:
           echo "*.json" >> .gitignore
           
           git add .
-          git commit -m "Clean deploy to HF"
+          git commit -m "Clean deploy to HF with LFS"
 
       - name: Push to hub
         env:
