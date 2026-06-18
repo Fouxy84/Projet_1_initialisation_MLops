@@ -12,5 +12,4 @@ elasticsearch==8.12.0
 pathlib
 onnxruntime
 onnx 
-pyaudioop
 #evidently==0.4.19
