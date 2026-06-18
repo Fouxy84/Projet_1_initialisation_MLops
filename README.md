@@ -67,6 +67,7 @@ docker ps                        # View running containers
 docker-compose down              # Stop and remove containers
 ```
 
+
 ## CI/CD Pipeline
 1. **Push**: Code is pushed to the GitHub repository.
 2. **Test**: GitHub Actions automatically runs the tests using `pytest`.
