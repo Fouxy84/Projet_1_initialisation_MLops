@@ -32,6 +32,34 @@ This project provides both an interactive web dashboard (Gradio) and a scalable 
 - **CI/CD**: GitHub Actions, Pytest, Hugging Face Spaces
 - **Containerization & Monitoring**: Docker, Docker Compose, Elasticsearch, Grafana, Fluentd
 
+## Environment Setup
+
+### Using Conda (Recommended)
+```bash
+# Create the environment
+conda create -n mlops python=3.10
+
+# Activate the environment
+conda activate mlops
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Using Python venv
+```bash
+# Create the virtual environment
+python -m venv venv
+
+# Activate the environment (Windows)
+.\venv\Scripts\activate
+# Activate the environment (Mac/Linux)
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
 ## Getting Started Locally
 
 ### 1. Interactive Dashboard (Gradio)
